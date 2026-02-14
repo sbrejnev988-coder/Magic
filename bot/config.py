@@ -107,7 +107,10 @@ class Settings:
             errors.append("Неподдерживаемый формат DATABASE_URL. Поддерживаются: postgresql://, sqlite://")
         
         if errors:
-            raise ValueError("\n".join(["\nОшибки конфигурации:"] + errors))
+            import logging
+            _log = logging.getLogger(__name__)
+            for err in errors:
+                _log.warning("Config: %s", err)
 
     @property
     def is_llm_configured(self) -> bool:
