@@ -17,6 +17,7 @@ from bot.services.order import OrderService, OrderStatus
 from bot.database.engine import create_engine, get_session_maker
 from bot.config import Settings
 
+logger = logging.getLogger(__name__)
 settings = Settings()
 session_maker = None
 if settings.is_database_configured:
@@ -26,7 +27,6 @@ if settings.is_database_configured:
     except Exception as e:
         logger.error(f"Не удалось создать session_maker для заказов: {e}")
 
-logger = logging.getLogger(__name__)
 
 router = Router()
 
