@@ -24,7 +24,7 @@ settings = Settings()
 
 # Состояния для гибридного режима (оставлено для совместимости, но не используется)
 class HybridModeStates(StatesGroup):
-            waiting_for_edit = State()
+  waiting_for_edit = State()
 
 
 @router.message(F.text.contains("🔘 Режим ИИ"))
