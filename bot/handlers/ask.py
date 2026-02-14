@@ -11,6 +11,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.services.llm import get_llm_service
+from bot.services.profile_service import get_profile_service
 from bot.services.history import ConsultationHistory
 from bot.services.user_settings import UserSettingsService
 from bot.services.order import OrderService
@@ -128,13 +129,17 @@ async def process_ai_question(message: Message, state: FSMContext, session_maker
         # Показываем статус "думаю"
         thinking_msg = await message.answer("🤔 *AI думает...*", parse_mode="Markdown")
         
-        # Получаем сервис LLM
+        # Получаем сервис LLM и профиль пользователя
         llm_service = get_llm_service(settings)
+        profile_service = get_profile_service()
+        user_profile = await profile_service.get_profile(user_id)
         
-        # Генерируем ответ
-        response = await llm_service.generate_interpretation(
+        # Генерируем персонализированный ответ
+        response = await llm_service.generate_personalized(
             prompt=question,
-            context="Пользователь просит консультацию по эзотерическому вопросу."
+            module="",  # общий AI режим
+            user_profile=user_profile,
+            extra_context={"context": "Пользователь просит консультацию по эзотерическому вопросу."}
         )
         
         # Удаляем сообщение "думаю"
@@ -266,7 +271,7 @@ async def process_ask_extras(callback: CallbackQuery):
 
 
 # Обработка текстовых кнопок (если добавим кнопку "Консультация AI")
-@router.message(F.text.contains("консультация"))
+@router.message(F.text == "консультация")
 async def handle_ask_button(message: Message, state: FSMContext):
     """Обработка нажатия кнопки 'Консультация AI'"""
     await cmd_ask(message, state)
