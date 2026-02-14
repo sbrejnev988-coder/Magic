@@ -24,10 +24,10 @@ settings = Settings()
 
 # Состояния для гибридного режима (оставлено для совместимости, но не используется)
 class HybridModeStates(StatesGroup):
-  waiting_for_edit = State()
+    waiting_for_edit = State()
 
 
-@router.message(F.text.contains("🔘 Режим ИИ"))
+@router.message(F.text == "🔘 Режим ИИ")
 async def handle_ai_mode_button(message: Message, state: FSMContext):
     """Обработчик кнопки переключения режима ИИ."""
     user_id = message.from_user.id
@@ -60,7 +60,7 @@ async def handle_ai_mode_button(message: Message, state: FSMContext):
         await message.answer(response, parse_mode="Markdown")
 
 
-@router.message(F.text.contains("🔄 Гибридный режим"))
+@router.message(F.text == "🔄 Гибридный режим")
 async def handle_hybrid_mode_button(message: Message, state: FSMContext):
     """Обработчик кнопки переключения гибридного режима."""
     user_id = message.from_user.id
@@ -98,11 +98,20 @@ async def handle_hybrid_mode_button(message: Message, state: FSMContext):
 
 
 @router.message(F.text)
-async def handle_text_in_ai_mode(message: Message, state: FSMContext):
+async def handle_text_in_ai_mode(message: Message, state: FSMContext, session_maker=None):
     """Обработчик текстовых сообщений в режиме ИИ."""
     user_id = message.from_user.id
     
-    async with get_session_maker()() as session:
+    if session_maker is None:
+        # Fallback для обратной совместимости (не должно происходить)
+        from bot.database.engine import get_session_maker
+        from bot.config import Settings
+        settings = Settings()
+        from bot.database.engine import create_engine
+        engine = create_engine(settings.DATABASE_URL)
+        session_maker = get_session_maker(engine)
+    
+    async with session_maker() as session:
         # Проверяем, включен ли режим ИИ
         ai_mode = await UserSettingsService.get_ai_mode(session, user_id)
         hybrid_mode = await UserSettingsService.get_hybrid_mode(session, user_id)
@@ -419,3 +428,6 @@ async def handle_order_premium_consultation(callback: CallbackQuery):
         "• Поддержке в течение 24 часов",
         parse_mode="Markdown"
     )
+
+# Обратная совместимость с start.py
+cmd_ai_enter = handle_ai_mode_button
