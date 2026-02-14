@@ -21,7 +21,6 @@ class Settings:
     # Telegram бот
     BOT_TOKEN: str = field(default_factory=lambda: os.getenv("BOT_TOKEN", ""))
     ADMIN_BOT_TOKEN: str = field(default_factory=lambda: os.getenv("ADMIN_BOT_TOKEN", ""))
-    # Убран хардкод ADMIN_USER_ID - теперь обязателен в .env
     ADMIN_USER_ID: int = field(default_factory=lambda: int(os.getenv("ADMIN_USER_ID", "0")))
     
     # Telegram Userbot API (for automation)
@@ -39,6 +38,10 @@ class Settings:
     # API Keys
     OPENAI_API_KEY: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
     PERPLEXITY_API_KEY: str = field(default_factory=lambda: os.getenv("PERPLEXITY_API_KEY", ""))
+    
+    # LLM Models
+    OPENAI_MODEL: str = field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
+    PERPLEXITY_MODEL: str = field(default_factory=lambda: os.getenv("PERPLEXITY_MODEL", "sonar"))
 
     # Пути
     UPLOAD_DIR: str = field(default_factory=lambda: os.getenv("UPLOAD_DIR", "uploads"))
@@ -50,6 +53,10 @@ class Settings:
 
     # Логирование
     LOG_LEVEL: str = field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"))
+    
+    # Платежи
+    PAYMENT_CARD_NUMBER: str = field(default_factory=lambda: os.getenv("PAYMENT_CARD_NUMBER", ""))
+    PAYMENT_AMOUNT: int = field(default_factory=lambda: int(os.getenv("PAYMENT_AMOUNT", "777")))
 
     # Функциональность (включение/выключение модулей)
     ENABLE_TAROT: bool = field(default_factory=lambda: os.getenv("ENABLE_TAROT", "true").lower() == "true")
