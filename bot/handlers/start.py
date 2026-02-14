@@ -250,13 +250,8 @@ async def handle_hybrid_mode_button(message: Message, state: FSMContext):
 
 
 @router.message(F.text)
-async def handle_unknown_text(message: Message, state: FSMContext):
+async def handle_unknown_text(message: Message):
     """Обработчик любого неизвестного текста — просим использовать кнопки"""
-        # Если пользователь в AI/Hybrid режиме, не показываем подсказку
-        current_state = await state.get_state()
-        if current_state:
-            return  # Пользователь в каком-то состоянии, не мешаем
-        
     logging.info(f"Unknown text from {message.from_user.id}: {message.text}")
     
     hint_text = f"""

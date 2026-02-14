@@ -54,7 +54,7 @@ async def cmd_start(message: Message):
     )
     
     welcome_text = f"""
-👨\u200d💼 *Добро пожаловать, консультант!*
+👨‍💼 *Добро пожаловать, консультант!*
 
 Это бот-коморка для работы с пользователями MysticBot.
 
@@ -76,6 +76,35 @@ async def cmd_start(message: Message):
 """
     
     await message.answer(welcome_text, reply_markup=builder.as_markup(), parse_mode="Markdown")
+
+
+@router.message()
+async def handle_unknown(message: Message):
+    """Обработчик неизвестных сообщений для консультанта"""
+    import logging
+    log = logging.getLogger(__name__)
+    user_id = message.from_user.id
+    is_consult = is_consultant(user_id)
+    
+    log.info(f"HANDLE_UNKNOWN: user_id={user_id}, is_consultant={is_consult}, text='{message.text}'")
+    
+    if not is_consult:
+        log.warning(f"ACCESS DENIED: user_id={user_id} is not consultant")
+        await message.answer("⛔️ У вас нет прав доступа к этому боту.")
+        return
+    
+    hint_text = """
+🤔 Этот бот предназначен только для работы консультанта.
+
+Используйте меню консультанта или команды:
+/consultant — главное меню
+/consultations — консультации
+/orders — заказы
+/drafts — черновики
+/stats — статистика
+"""
+    
+    await message.answer(hint_text, parse_mode="Markdown")
 
 
 @router.message(Command("debug"))
@@ -102,32 +131,3 @@ async def cmd_debug(message: Message):
 *Проверка равенства:* `{user_id == admin_id}`
 """
     await message.answer(debug_text, parse_mode="Markdown")
-
-
-@router.message()
-async def handle_unknown(message: Message):
-    """Обработчик неизвестных сообщений для консультанта (catch-all, должен быть ПОСЛЕДНИМ)"""
-    import logging
-    log = logging.getLogger(__name__)
-    user_id = message.from_user.id
-    is_consult = is_consultant(user_id)
-    
-    log.info(f"HANDLE_UNKNOWN: user_id={user_id}, is_consultant={is_consult}, text='{message.text}'")
-    
-    if not is_consult:
-        log.warning(f"ACCESS DENIED: user_id={user_id} is not consultant")
-        await message.answer("⛔️ У вас нет прав доступа к этому боту.")
-        return
-    
-    hint_text = """
-🤔 Этот бот предназначен только для работы консультанта.
-
-Используйте меню консультанта или команды:
-/consultant — главное меню
-/consultations — консультации
-/orders — заказы
-/drafts — черновики
-/stats — статистика
-"""
-    
-    await message.answer(hint_text, parse_mode="Markdown")
