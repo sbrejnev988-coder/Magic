@@ -29,7 +29,7 @@ class Settings:
 
     # База данных
     DATABASE_URL: str = field(
-        default_factory=lambda: os.getenv("DATABASE_URL", "postgresql://mystic:mysticpass@localhost/mysticbot")
+        default_factory=lambda: os.getenv("DATABASE_URL", "sqlite+aiosqlite:///mysticbot.db")
     )
     REDIS_URL: str = field(
         default_factory=lambda: os.getenv("REDIS_URL", "redis://localhost:6379/0")
