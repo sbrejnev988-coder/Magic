@@ -1,5 +1,5 @@
 """
-Движок базы данных SQLAlchemy с connection pooling
+Р”РІРёР¶РѕРє Р±Р°Р·С‹ РґР°РЅРЅС‹С… SQLAlchemy СЃ connection pooling
 """
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -9,23 +9,23 @@ from typing import AsyncGenerator
 
 def create_engine(database_url: str, echo: bool = False):
     """
-    Создание async engine с настроенным connection pooling
+    РЎРѕР·РґР°РЅРёРµ async engine СЃ РЅР°СЃС‚СЂРѕРµРЅРЅС‹Рј connection pooling
     
     Args:
-        database_url: URL базы данных
-        echo: Вывод SQL запросов в лог
+        database_url: URL Р±Р°Р·С‹ РґР°РЅРЅС‹С…
+        echo: Р’С‹РІРѕРґ SQL Р·Р°РїСЂРѕСЃРѕРІ РІ Р»РѕРі
     """
-    # Настройки connection pooling
+    # РќР°СЃС‚СЂРѕР№РєРё connection pooling
     pool_settings = {
         "poolclass": QueuePool,
-        "pool_size": 10,              # Минимальное количество соединений
-        "max_overflow": 20,            # Максимальное количество дополнительных соединений
-        "pool_timeout": 30,            # Таймаут ожидания свободного соединения (секунды)
-        "pool_recycle": 3600,          # Переиспользование соединений каждый час
-        "pool_pre_ping": True,          # Проверка соединения перед использованием
+        "pool_size": 10,              # РњРёРЅРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРѕРµРґРёРЅРµРЅРёР№
+        "max_overflow": 20,            # РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… СЃРѕРµРґРёРЅРµРЅРёР№
+        "pool_timeout": 30,            # РўР°Р№РјР°СѓС‚ РѕР¶РёРґР°РЅРёСЏ СЃРІРѕР±РѕРґРЅРѕРіРѕ СЃРѕРµРґРёРЅРµРЅРёСЏ (СЃРµРєСѓРЅРґС‹)
+        "pool_recycle": 3600,          # РџРµСЂРµРёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ СЃРѕРµРґРёРЅРµРЅРёР№ РєР°Р¶РґС‹Р№ С‡Р°СЃ
+        "pool_pre_ping": True,          # РџСЂРѕРІРµСЂРєР° СЃРѕРµРґРёРЅРµРЅРёСЏ РїРµСЂРµРґ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј
     }
     
-    # Для SQLite не используем pooling
+    # Р”Р»СЏ SQLite РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј pooling
     if "sqlite" in database_url:
         return create_async_engine(
             database_url,
@@ -33,7 +33,7 @@ def create_engine(database_url: str, echo: bool = False):
             connect_args={"check_same_thread": False}
         )
     
-    # Для PostgreSQL используем полноценный pooling
+    # Р”Р»СЏ PostgreSQL РёСЃРїРѕР»СЊР·СѓРµРј РїРѕР»РЅРѕС†РµРЅРЅС‹Р№ pooling
     return create_async_engine(
         database_url,
         echo=echo,
@@ -43,13 +43,13 @@ def create_engine(database_url: str, echo: bool = False):
 
 def get_session_maker(engine) -> async_sessionmaker:
     """
-    Создание session maker для работы с БД
+    РЎРѕР·РґР°РЅРёРµ session maker РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ Р‘Р”
     
     Args:
         engine: SQLAlchemy async engine
     
     Returns:
-        async_sessionmaker: Фабрика сессий
+        async_sessionmaker: Р¤Р°Р±СЂРёРєР° СЃРµСЃСЃРёР№
     """
     return async_sessionmaker(
         engine,
@@ -62,7 +62,7 @@ def get_session_maker(engine) -> async_sessionmaker:
 
 async def get_session(session_maker: async_sessionmaker) -> AsyncGenerator[AsyncSession, None]:
     """
-    Context manager для получения сессии БД
+    Context manager РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ СЃРµСЃСЃРёРё Р‘Р”
     
     Usage:
         async with get_session(session_maker) as session:
