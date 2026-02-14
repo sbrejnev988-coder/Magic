@@ -1,0 +1,14 @@
+# Optional ML dependencies (install only if needed)
+# Install with: pip install -r requirements-ml.txt
+
+# Computer Vision
+opencv-python>=4.8.0
+easyocr>=1.7.0
+
+# Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
+
+# Scientific computing
+numpy>=1.24.0
