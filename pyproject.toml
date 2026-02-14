@@ -1,0 +1,37 @@
+[project]
+name = "mysticbot"
+version = "1.0.0"
+description = "Мистический Telegram бот с гаданиями и предсказаниями"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "MysticBot Team" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.optional-dependencies]
+ml = [
+    "opencv-python>=4.8.0",
+    "easyocr>=1.7.0",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "transformers>=4.30.0",
+    "numpy>=1.24.0",
+]
+
+[tool.setuptools]
+packages = ["bot"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

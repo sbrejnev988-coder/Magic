@@ -21,7 +21,8 @@ class Settings:
     # Telegram бот
     BOT_TOKEN: str = field(default_factory=lambda: os.getenv("BOT_TOKEN", ""))
     ADMIN_BOT_TOKEN: str = field(default_factory=lambda: os.getenv("ADMIN_BOT_TOKEN", ""))
-    ADMIN_USER_ID: int = field(default_factory=lambda: int(os.getenv("ADMIN_USER_ID", "576704037")))
+    # Убран хардкод ADMIN_USER_ID - теперь обязателен в .env
+    ADMIN_USER_ID: int = field(default_factory=lambda: int(os.getenv("ADMIN_USER_ID", "0")))
     
     # Telegram Userbot API (for automation)
     TELEGRAM_API_ID: str = field(default_factory=lambda: os.getenv("TELEGRAM_API_ID", ""))
@@ -52,7 +53,6 @@ class Settings:
 
     # Функциональность (включение/выключение модулей)
     ENABLE_TAROT: bool = field(default_factory=lambda: os.getenv("ENABLE_TAROT", "true").lower() == "true")
-    ENABLE_PALMISTRY: bool = field(default_factory=lambda: os.getenv("ENABLE_PALMISTRY", "false").lower() == "true")
     ENABLE_NUMEROLOGY: bool = field(default_factory=lambda: os.getenv("ENABLE_NUMEROLOGY", "true").lower() == "true")
     ENABLE_HOROSCOPE: bool = field(default_factory=lambda: os.getenv("ENABLE_HOROSCOPE", "true").lower() == "true")
     ENABLE_FINANCE_CALENDAR: bool = field(
@@ -76,6 +76,31 @@ class Settings:
     ENABLE_MEDITATION: bool = field(
         default_factory=lambda: os.getenv("ENABLE_MEDITATION", "true").lower() == "true"
     )
+
+    def __post_init__(self):
+        """Валидация конфигурации после инициализации"""
+        errors = []
+        
+        # Критические параметры
+        if not self.BOT_TOKEN or self.BOT_TOKEN == "":
+            errors.append("BOT_TOKEN не указан. Укажите его в .env файле.")
+        
+        if self.ADMIN_USER_ID == 0:
+            errors.append("ADMIN_USER_ID не указан. Укажите его в .env файле.")
+        
+        # Проверка формата API ключей
+        if self.OPENAI_API_KEY and not self.OPENAI_API_KEY.startswith("sk-"):
+            errors.append("Некорректный формат OPENAI_API_KEY. Должен начинаться с 'sk-'")
+        
+        if self.PERPLEXITY_API_KEY and not self.PERPLEXITY_API_KEY.startswith("pplx-"):
+            errors.append("Некорректный формат PERPLEXITY_API_KEY. Должен начинаться с 'pplx-'")
+        
+        # Проверка DATABASE_URL
+        if self.DATABASE_URL and not any(prefix in self.DATABASE_URL for prefix in ["postgresql://", "sqlite://"]):
+            errors.append("Неподдерживаемый формат DATABASE_URL. Поддерживаются: postgresql://, sqlite://")
+        
+        if errors:
+            raise ValueError("\n".join(["\nОшибки конфигурации:"] + errors))
 
     @property
     def is_llm_configured(self) -> bool:
