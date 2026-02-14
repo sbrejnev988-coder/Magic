@@ -229,7 +229,7 @@ async def handle_add_note(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(F.text & F.from_user.id == settings.ADMIN_USER_ID)
-async def handle_admin_note(message: Message, state: FSMContext):
+async def handle_admin_note(message: Message, state: FSMContext, session_maker=None):
     """РћР±СЂР°Р±РѕС‚С‡РёРє С‚РµРєСЃС‚РѕРІС‹С… СЃРѕРѕР±С‰РµРЅРёР№ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР° РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ Р·Р°РјРµС‚РєРё"""
     data = await state.get_data()
     order_id = data.get("admin_note_order_id")
@@ -237,7 +237,7 @@ async def handle_admin_note(message: Message, state: FSMContext):
     if order_id:
         note_text = message.text.strip()
         if note_text:
-            async with get_session_maker()() as session:
+            async with (session_maker or get_session_maker())() as session:
                 order_service = OrderService(session)
                 await order_service.add_admin_notes(order_id, note_text)
                 
@@ -248,7 +248,7 @@ async def handle_admin_note(message: Message, state: FSMContext):
 
 
 @router.callback_query(lambda c: c.data.startswith("order_details:"))
-async def handle_order_details(callback: CallbackQuery):
+async def handle_order_details(callback: CallbackQuery, session_maker=None):
     """РћР±СЂР°Р±РѕС‚С‡РёРє РїСЂРѕСЃРјРѕС‚СЂР° РґРµС‚Р°Р»РµР№ Р·Р°РєР°Р·Р°"""
     if not is_admin(callback.from_user.id):
         await callback.answer("в›”пёЏ Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰С‘РЅ.", show_alert=True)
@@ -260,7 +260,7 @@ async def handle_order_details(callback: CallbackQuery):
         await callback.answer("вќЊ РћС€РёР±РєР° С„РѕСЂРјР°С‚Р°.", show_alert=True)
         return
     
-    async with get_session_maker()() as session:
+    async with (session_maker or get_session_maker())() as session:
         order_service = OrderService(session)
         order = await order_service.get_order_by_id(order_id)
         
@@ -289,7 +289,7 @@ async def handle_order_details(callback: CallbackQuery):
 
 
 @router.callback_query(lambda c: c.data.startswith("ocr_screenshot:"))
-async def handle_ocr_screenshot(callback: CallbackQuery):
+async def handle_ocr_screenshot(callback: CallbackQuery, session_maker=None):
     """Р Р°СЃРїРѕР·РЅР°РІР°РЅРёРµ С‚РµРєСЃС‚Р° РЅР° СЃРєСЂРёРЅС€РѕС‚Рµ РѕРїР»Р°С‚С‹"""
     if not is_admin(callback.from_user.id):
         await callback.answer("в›”пёЏ Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰С‘РЅ.", show_alert=True)
@@ -301,7 +301,7 @@ async def handle_ocr_screenshot(callback: CallbackQuery):
         await callback.answer("вќЊ РћС€РёР±РєР° С„РѕСЂРјР°С‚Р°.", show_alert=True)
         return
     
-    async with get_session_maker()() as session:
+    async with (session_maker or get_session_maker())() as session:
         order_service = OrderService(session)
         order = await order_service.get_order_by_id(order_id)
         
@@ -395,13 +395,13 @@ async def handle_ocr_screenshot(callback: CallbackQuery):
 
 
 @router.message(Command("admin_drafts"))
-async def cmd_admin_drafts(message: Message):
+async def cmd_admin_drafts(message: Message, session_maker=None):
     """РџСЂРѕСЃРјРѕС‚СЂ С‡РµСЂРЅРѕРІРёРєРѕРІ, РѕР¶РёРґР°СЋС‰РёС… РїСЂРѕРІРµСЂРєРё С‡РµР»РѕРІРµРєРѕРј"""
     if not is_admin(message.from_user.id):
         await message.answer("в›”пёЏ Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰С‘РЅ.")
         return
     
-    async with get_session_maker()() as session:
+    async with (session_maker or get_session_maker())() as session:
         # РџРѕР»СѓС‡Р°РµРј С‡РµСЂРЅРѕРІРёРєРё, РѕР¶РёРґР°СЋС‰РёРµ РїСЂРѕРІРµСЂРєРё
         pending_drafts = await HybridDraftService.get_pending_drafts(session, limit=20)
         
@@ -441,7 +441,7 @@ async def cmd_admin_drafts(message: Message):
 
 
 @router.callback_query(lambda c: c.data.startswith("view_draft:"))
-async def handle_view_draft(callback: CallbackQuery):
+async def handle_view_draft(callback: CallbackQuery, session_maker=None):
     """РџСЂРѕСЃРјРѕС‚СЂ РґРµС‚Р°Р»РµР№ С‡РµСЂРЅРѕРІРёРєР°"""
     if not is_admin(callback.from_user.id):
         await callback.answer("в›”пёЏ Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰С‘РЅ.", show_alert=True)
@@ -453,7 +453,7 @@ async def handle_view_draft(callback: CallbackQuery):
         await callback.answer("вќЊ РћС€РёР±РєР° С„РѕСЂРјР°С‚Р°.", show_alert=True)
         return
     
-    async with get_session_maker()() as session:
+    async with (session_maker or get_session_maker())() as session:
         draft = await HybridDraftService.get_draft_by_id(session, draft_id)
         
         if not draft:
@@ -487,7 +487,7 @@ async def handle_view_draft(callback: CallbackQuery):
 
 
 @router.callback_query(lambda c: c.data.startswith("approve_draft:"))
-async def handle_approve_draft(callback: CallbackQuery):
+async def handle_approve_draft(callback: CallbackQuery, session_maker=None):
     """РћРґРѕР±СЂРµРЅРёРµ С‡РµСЂРЅРѕРІРёРєР° (РѕС‚РїСЂР°РІРєР° РєР°Рє РµСЃС‚СЊ)"""
     if not is_admin(callback.from_user.id):
         await callback.answer("в›”пёЏ Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰С‘РЅ.", show_alert=True)
@@ -499,7 +499,7 @@ async def handle_approve_draft(callback: CallbackQuery):
         await callback.answer("вќЊ РћС€РёР±РєР° С„РѕСЂРјР°С‚Р°.", show_alert=True)
         return
     
-    async with get_session_maker()() as session:
+    async with (session_maker or get_session_maker())() as session:
         draft = await HybridDraftService.approve_draft(
             session=session,
             draft_id=draft_id,
@@ -559,7 +559,7 @@ async def handle_edit_draft_admin(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(F.text & F.from_user.id == settings.ADMIN_USER_ID)
-async def handle_admin_edited_draft(message: Message, state: FSMContext):
+async def handle_admin_edited_draft(message: Message, state: FSMContext, session_maker=None):
     """РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРЅРѕРіРѕ С‡РµСЂРЅРѕРІРёРєР° Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂРѕРј"""
     data = await state.get_data()
     draft_id = data.get("admin_edit_draft_id")
@@ -573,7 +573,7 @@ async def handle_admin_edited_draft(message: Message, state: FSMContext):
         await message.answer("вќЊ РўРµРєСЃС‚ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј.")
         return
     
-    async with get_session_maker()() as session:
+    async with (session_maker or get_session_maker())() as session:
         draft = await HybridDraftService.approve_draft(
             session=session,
             draft_id=draft_id,
@@ -629,7 +629,7 @@ async def handle_reject_draft(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(F.text & F.from_user.id == settings.ADMIN_USER_ID)
-async def handle_admin_reject_reason(message: Message, state: FSMContext):
+async def handle_admin_reject_reason(message: Message, state: FSMContext, session_maker=None):
     """РћР±СЂР°Р±РѕС‚С‡РёРє РїСЂРёС‡РёРЅС‹ РѕС‚РєР»РѕРЅРµРЅРёСЏ С‡РµСЂРЅРѕРІРёРєР°"""
     data = await state.get_data()
     draft_id = data.get("admin_reject_draft_id")
@@ -643,7 +643,7 @@ async def handle_admin_reject_reason(message: Message, state: FSMContext):
         await message.answer("вќЊ РџСЂРёС‡РёРЅР° РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚РѕР№.")
         return
     
-    async with get_session_maker()() as session:
+    async with (session_maker or get_session_maker())() as session:
         draft = await HybridDraftService.reject_draft(
             session=session,
             draft_id=draft_id,
