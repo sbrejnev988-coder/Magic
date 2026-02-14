@@ -10,6 +10,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
+
 router = Router()
 
 
@@ -36,7 +37,7 @@ async def cmd_start(message: Message):
     """Обработчик команды /start"""
     logging.info(f"Received /start from {message.from_user.id}")
     user = message.from_user
-    
+
     welcome_text = f"""
 ✨ Добро пожаловать, {user.first_name}!
 
@@ -52,9 +53,9 @@ async def cmd_start(message: Message):
 
 Выберите интересующую вас тему из меню ниже!
 """
-    
+
     keyboard = build_main_keyboard()
-    
+
     await message.answer(welcome_text, reply_markup=keyboard, parse_mode="Markdown")
 
 
@@ -90,7 +91,7 @@ async def cmd_help(message: Message):
 """
     # Показываем то же меню, что и в /start
     keyboard = build_main_keyboard()
-    
+
     await message.answer(help_text, reply_markup=keyboard, parse_mode="Markdown")
 
 
@@ -144,7 +145,7 @@ async def cmd_price(message: Message):
     builder = InlineKeyboardBuilder()
     builder.button(text="🛒 Заказать консультацию", callback_data="order_consultation")
     keyboard = builder.as_markup()
-    
+
     await message.answer(price_text, reply_markup=keyboard, parse_mode=None)
 
 
@@ -155,7 +156,6 @@ async def handle_price_button(message: Message):
 
 
 # Обработчик перенесен в orders.py
-
 
 # Обработчики текстовых кнопок главного меню
 @router.message(F.text.contains("🃏 Карты Таро"))
@@ -247,26 +247,3 @@ async def handle_hybrid_mode_button(message: Message, state: FSMContext):
     """Обработчик кнопки гибридного режима"""
     from bot.handlers.ai_mode import handle_hybrid_mode_button
     await handle_hybrid_mode_button(message, state)
-
-
-@router.message(F.text)
-async def handle_unknown_text(message: Message, state: FSMContext):
-    """Обработчик любого неизвестного текста — просим использовать кнопки"""
-        # Если пользователь в AI/Hybrid режиме, не показываем подсказку
-        current_state = await state.get_state()
-        if current_state:
-            return  # Пользователь в каком-то состоянии, не мешаем
-        
-    logging.info(f"Unknown text from {message.from_user.id}: {message.text}")
-    
-    hint_text = f"""
-🤔 Я не понимаю текстовые команды — пожалуйста, используйте кнопки меню ниже!
-
-*Ваше сообщение:* «{message.text}»
-
-Выберите интересующий раздел:
-"""
-    # Показываем то же меню, что и в /start
-    keyboard = build_main_keyboard()
-    
-    await message.answer(hint_text, reply_markup=keyboard, parse_mode="Markdown")
