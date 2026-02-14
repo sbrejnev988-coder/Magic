@@ -200,9 +200,6 @@ class UserSettingsService:
             # Создаём настройки по умолчанию
             settings = await UserSettingsService.get_or_create(session, user_id)
         
-        # Если пользователь не платный, отказываем
-        if not is_premium_user:
-            return False, "⚠️ *Доступ ограничен*\n\nЗапросы к ИИ доступны только платным подписчикам.\n\nДля получения доступа закажите консультацию через раздел «💎 Консультация (777 ₽)»."
         
         # Проверяем сброс дневного счётчика
         today = datetime.utcnow().date()
@@ -215,8 +212,8 @@ class UserSettingsService:
             await session.commit()
         
         # Проверяем лимит
-        limit = settings.ai_requests_limit
-        if settings.daily_ai_requests >= limit:
+        limit = 15 if is_premium_user else 3  # Премиум: 15, Бесплатно: 3      
+                if settings.daily_ai_requests >= limit:
             return False, f"⚠️ *Дневной лимит исчерпан*\n\nВы использовали {settings.daily_ai_requests} из {limit} запросов ИИ за сегодня.\n\nЛимит обновится в 00:00 по UTC."
         
         return True, ""
