@@ -1,4 +1,4 @@
-"""
+﻿"""
 Обработчик режима ИИ: переключение режима, при котором все текстовые сообщения обрабатываются ИИ.
 """
 
@@ -11,6 +11,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.services.user_settings import UserSettingsService
 from bot.services.llm import get_llm_service
+from bot.services.profile_service import get_profile_service
 from bot.services.history import ConsultationHistory
 from bot.services.order import OrderService
 from bot.services.hybrid_draft import HybridDraftService
@@ -166,13 +167,17 @@ async def handle_text_in_ai_mode(message: Message, state: FSMContext, session_ma
         # Показываем статус "думаю"
         thinking_msg = await message.answer("🤔 *AI думает...*", parse_mode="Markdown")
         
-        # Получаем сервис LLM
+        # Получаем сервис LLM и профиль пользователя
         llm_service = get_llm_service(settings)
+        profile_service = get_profile_service()
+        user_profile = await profile_service.get_profile(user_id)
         
-        # Генерируем ответ
-        response = await llm_service.generate_interpretation(
+        # Генерируем персонализированный ответ
+        response = await llm_service.generate_personalized(
             prompt=question,
-            context="Пользователь просит консультацию по эзотерическому вопросу."
+            module="",  # общий AI режим
+            user_profile=user_profile,
+            extra_context={"context": "Пользователь просит консультацию по эзотерическому вопросу."}
         )
         
         # Удаляем сообщение "думаю"
