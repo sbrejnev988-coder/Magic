@@ -110,10 +110,13 @@ async def main():
     dp.message.middleware(AuthMiddleware(session_maker))
     
     # Включаем роутеры для консультанта
-    dp.include_router(consultant_start_router)  # для /start (специальный для консультанта)
+    # ВАЖНО: consultant_start_router ПОСЛЕДНИМ — содержит catch-all @router.message()
+    # который перехватывает ВСЕ сообщения. Если поставить его первым,
+    # команды /stats, /search, /user и т.д. никогда не дойдут до своих обработчиков.
     dp.include_router(consultant_router)
     dp.include_router(admin_router)  # админ-панель для администратора
     dp.include_router(admin_search_router)  # расширенный поиск пользователей
+    dp.include_router(consultant_start_router)  # /start + catch-all (ПОСЛЕДНИМ!)
     # orders_router не включаем - это для пользовательских заказов
     
     # Запуск

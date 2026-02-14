@@ -4,6 +4,9 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+# Глобальный экземпляр фабрики сессий (singleton)
+_session_maker = None
+
 
 def create_engine(database_url: str):
     """Создать асинхронный движок SQLAlchemy"""
@@ -22,6 +25,18 @@ def create_engine(database_url: str):
     return engine
 
 
-def get_session_maker(engine):
-    """Создать фабрику сессий"""
-    return async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+def get_session_maker(engine=None):
+    """Создать или получить фабрику сессий (singleton).
+    
+    При первом вызове необходимо передать engine для инициализации.
+    Последующие вызовы без аргументов возвращают сохранённый экземпляр.
+    """
+    global _session_maker
+    if engine is not None:
+        _session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    if _session_maker is None:
+        raise RuntimeError(
+            "Session maker не инициализирован. "
+            "Сначала вызовите get_session_maker(engine) при старте приложения."
+        )
+    return _session_maker
