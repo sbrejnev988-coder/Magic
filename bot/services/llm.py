@@ -17,8 +17,17 @@ class LLMService:
     
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.client = httpx.AsyncClient(timeout=30.0)
+        self.client = None
         self.system_prompt = self._load_system_prompt()
+    
+    async def __aenter__(self):
+        """Async context manager entry"""
+        self.client = httpx.AsyncClient(timeout=30.0)
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit"""
+        await self.close()
     
     def _load_system_prompt(self) -> str:
         """Загрузка системного промпта из файла."""
@@ -48,36 +57,24 @@ class LLMService:
             log.warning("LLM не настроен: отсутствуют API ключи")
             return None
         
-        # Формирование полного промпта
-        full_prompt = f"""
-Ты — эзотерический помощник MysticBot. Твоя задача — давать мудрые, 
-позитивные и полезные интерпретации в области таро, нумерологии, 
-гороскопов и других духовных практик.
-
-{context}
-
-Вопрос пользователя: {prompt}
-
-Ответь на русском языке в формате, подходящем для Telegram-бота:
-- Будь краток, но содержателен
-- Используй эмодзи для визуального оформления
-- Добавь практический совет
-- Сохраняй доброжелательный и поддерживающий тон
-
-Интерпретация:
-"""
+        # Инициализируем клиент если не создан
+        if self.client is None:
+            self.client = httpx.AsyncClient(timeout=30.0)
+        
+        # Формирование запроса пользователя с контекстом
+        user_message = f"{context}\n\n{prompt}" if context else prompt
         
         # Выбор провайдера
         if self.settings.PERPLEXITY_API_KEY:
-            return await self._call_perplexity(full_prompt)
+            return await self._call_perplexity(user_message)
         elif self.settings.OPENAI_API_KEY:
-            return await self._call_openai(full_prompt)
+            return await self._call_openai(user_message)
         else:
             return None
     
-    async def _call_perplexity(self, prompt: str) -> Optional[str]:
+    async def _call_perplexity(self, user_message: str) -> Optional[str]:
         """Вызов Perplexity API"""
-        log.info(f"Calling Perplexity API with prompt length: {len(prompt)}")
+        log.info(f"Calling Perplexity API with message length: {len(user_message)}")
         
         try:
             headers = {
@@ -86,21 +83,20 @@ class LLMService:
             }
             
             data = {
-                "model": "sonar",
+                "model": self.settings.PERPLEXITY_MODEL,
                 "messages": [
                     {
                         "role": "system",
-                        "content": self.system_prompt[:500]  # Ограничиваем длину системного промпта для логов
+                        "content": self.system_prompt  # ✅ БЕЗ [:500]
                     },
                     {
                         "role": "user",
-                        "content": prompt[:1000]  # Ограничиваем для логов
+                        "content": user_message  # ✅ БЕЗ [:1000]
                     }
                 ],
-                "max_tokens": 500
+                "max_tokens": 1000,  # ✅ Увеличено с 500
+                "temperature": 0.7
             }
-            
-            log.debug(f"Perplexity request data: {data}")
             
             response = await self.client.post(
                 "https://api.perplexity.ai/chat/completions",
@@ -113,11 +109,9 @@ class LLMService:
                 result = response.json()
                 content = result["choices"][0]["message"]["content"]
                 log.info(f"Perplexity API success, response length: {len(content)}")
-                log.debug(f"Perplexity response snippet: {content[:200]}...")
                 return content
             else:
                 log.error(f"Perplexity API error: {response.status_code}")
-                log.error(f"Response headers: {dict(response.headers)}")
                 log.error(f"Response body: {response.text[:500]}")
                 return None
                 
@@ -131,9 +125,9 @@ class LLMService:
             log.error(f"Perplexity API exception: {e}", exc_info=True)
             return None
     
-    async def _call_openai(self, prompt: str) -> Optional[str]:
+    async def _call_openai(self, user_message: str) -> Optional[str]:
         """Вызов OpenAI API"""
-        log.info(f"Calling OpenAI API with prompt length: {len(prompt)}")
+        log.info(f"Calling OpenAI API with message length: {len(user_message)}")
         
         try:
             headers = {
@@ -142,21 +136,20 @@ class LLMService:
             }
             
             data = {
-                "model": "gpt-3.5-turbo",
+                "model": self.settings.OPENAI_MODEL,  # ✅ Из конфига
                 "messages": [
                     {
                         "role": "system",
-                        "content": self.system_prompt[:500]
+                        "content": self.system_prompt  # ✅ БЕЗ [:500]
                     },
                     {
                         "role": "user",
-                        "content": prompt[:1000]
+                        "content": user_message  # ✅ БЕЗ [:1000]
                     }
                 ],
-                "max_tokens": 500
+                "max_tokens": 1000,  # ✅ Увеличено с 500
+                "temperature": 0.7
             }
-            
-            log.debug(f"OpenAI request data: {data}")
             
             response = await self.client.post(
                 "https://api.openai.com/v1/chat/completions",
@@ -169,11 +162,9 @@ class LLMService:
                 result = response.json()
                 content = result["choices"][0]["message"]["content"]
                 log.info(f"OpenAI API success, response length: {len(content)}")
-                log.debug(f"OpenAI response snippet: {content[:200]}...")
                 return content
             else:
                 log.error(f"OpenAI API error: {response.status_code}")
-                log.error(f"Response headers: {dict(response.headers)}")
                 log.error(f"Response body: {response.text[:500]}")
                 return None
                 
@@ -189,7 +180,9 @@ class LLMService:
     
     async def close(self):
         """Закрытие клиента"""
-        await self.client.aclose()
+        if self.client:
+            await self.client.aclose()
+            self.client = None
 
 
 # Глобальный экземпляр сервиса

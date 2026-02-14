@@ -27,7 +27,7 @@ class AuthMiddleware(BaseMiddleware):
         # Базовые данные пользователя
         user_id = event.from_user.id
         username = event.from_user.username
-        log.info(f"Auth middleware: user {user_id}, message: {event.text}")
+        log.debug(f"Auth middleware: user {user_id} (@{username}), message length: {len(event.text or '')}")
         
         # Здесь можно добавить проверку подписки в базе данных
         # если session_maker передан

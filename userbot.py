@@ -43,10 +43,11 @@ PAYMENT_KEYWORDS = [
     'получатель', 'отправитель', 'банк', 'переведено', 'оплачено'
 ]
 
-# Чаты для мониторинга (по умолчанию)
+# ✅ КРИТИЧНО: Чаты для мониторинга (ТОЛЬКО эти чаты будут отслеживаться)
 MONITOR_CHATS = [
     'Mystictestadminbot',  # Чат для платежных скриншотов
     # Добавьте другие чаты по необходимости
+    # Пример: -1001234567890 (ID группы), 'username' (публичный чат)
 ]
 
 
@@ -109,7 +110,8 @@ class MysticUserbot:
     
     async def run_forever(self):
         """Бесконечный цикл работы"""
-        log.info("Userbot запущен. Ожидание сообщений...")
+        log.info(f"Userbot запущен. Мониторинг чатов: {len(MONITOR_CHATS)}")
+        log.info("Ожидание сообщений...")
         try:
             while self.running:
                 await asyncio.sleep(1)
@@ -131,17 +133,19 @@ class MysticUserbot:
     def register_handlers(self):
         """Регистрация обработчиков событий"""
         
-        @self.client.on(events.NewMessage(incoming=True))
+        # ✅ ИСПРАВЛЕНО: Добавлен фильтр чатов для безопасности
+        @self.client.on(events.NewMessage(incoming=True, chats=MONITOR_CHATS))
         async def handle_new_message(event: events.NewMessage.Event):
-            """Обработка всех новых сообщений"""
+            """Обработка новых сообщений ТОЛЬКО из мониторинг-чатов"""
             try:
                 await self.process_message(event.message)
             except Exception as e:
                 log.error(f"Ошибка обработки сообщения: {e}")
         
-        @self.client.on(events.MessageEdited(incoming=True))
+        # ✅ ИСПРАВЛЕНО: Добавлен фильтр чатов
+        @self.client.on(events.MessageEdited(incoming=True, chats=MONITOR_CHATS))
         async def handle_edited_message(event: events.MessageEdited.Event):
-            """Обработка отредактированных сообщений"""
+            """Обработка отредактированных сообщений ТОЛЬКО из мониторинг-чатов"""
             try:
                 await self.process_message(event.message)
             except Exception as e:

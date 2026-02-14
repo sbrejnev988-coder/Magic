@@ -74,7 +74,8 @@ async def main():
         log.critical("ADMIN_BOT_TOKEN не задан в .env файле!")
         return
     
-    log.info(f"Токен админ-бота: {settings.ADMIN_BOT_TOKEN[:10]}...")
+    # ✅ ИСПРАВЛЕНО: убрано логирование токена
+    log.info("✅ Токен админ-бота настроен")
     log.info(f"ID администратора: {settings.ADMIN_USER_ID}")
     
     # Подключаем базу данных
