@@ -1,0 +1,158 @@
+{
+  "cards": [
+    {
+      "id": 0,
+      "name": "Шут",
+      "name_en": "The Fool",
+      "arcana": "major",
+      "keywords": "Новые начинания"
+    },
+    {
+      "id": 1,
+      "name": "Маг",
+      "name_en": "The Magician",
+      "arcana": "major",
+      "keywords": "Воля"
+    },
+    {
+      "id": 2,
+      "name": "Верховная Жрица",
+      "name_en": "The High Priestess",
+      "arcana": "major",
+      "keywords": "Интуиция"
+    },
+    {
+      "id": 3,
+      "name": "Императрица",
+      "name_en": "The Empress",
+      "arcana": "major",
+      "keywords": "Изобилие"
+    },
+    {
+      "id": 4,
+      "name": "Император",
+      "name_en": "The Emperor",
+      "arcana": "major",
+      "keywords": "Авторитет"
+    },
+    {
+      "id": 5,
+      "name": "Иерофант",
+      "name_en": "The Hierophant",
+      "arcana": "major",
+      "keywords": "Традиция"
+    },
+    {
+      "id": 6,
+      "name": "Влюблённые",
+      "name_en": "The Lovers",
+      "arcana": "major",
+      "keywords": "Любовь"
+    },
+    {
+      "id": 7,
+      "name": "Колесница",
+      "name_en": "The Chariot",
+      "arcana": "major",
+      "keywords": "Победа"
+    },
+    {
+      "id": 8,
+      "name": "Сила",
+      "name_en": "Strength",
+      "arcana": "major",
+      "keywords": "Сила духа"
+    },
+    {
+      "id": 9,
+      "name": "Отшельник",
+      "name_en": "The Hermit",
+      "arcana": "major",
+      "keywords": "Самоанализ"
+    },
+    {
+      "id": 10,
+      "name": "Колесо Фортуны",
+      "name_en": "Wheel of Fortune",
+      "arcana": "major",
+      "keywords": "Судьба"
+    },
+    {
+      "id": 11,
+      "name": "Правосудие",
+      "name_en": "Justice",
+      "arcana": "major",
+      "keywords": "Баланс"
+    },
+    {
+      "id": 12,
+      "name": "Повешенный",
+      "name_en": "The Hanged Man",
+      "arcana": "major",
+      "keywords": "Жертва"
+    },
+    {
+      "id": 13,
+      "name": "Смерть",
+      "name_en": "Death",
+      "arcana": "major",
+      "keywords": "Преобразование"
+    },
+    {
+      "id": 14,
+      "name": "Умеренность",
+      "name_en": "Temperance",
+      "arcana": "major",
+      "keywords": "Баланс"
+    },
+    {
+      "id": 15,
+      "name": "Дьявол",
+      "name_en": "The Devil",
+      "arcana": "major",
+      "keywords": "Искушение"
+    },
+    {
+      "id": 16,
+      "name": "Башня",
+      "name_en": "The Tower",
+      "arcana": "major",
+      "keywords": "Внезапные изменения"
+    },
+    {
+      "id": 17,
+      "name": "Звезда",
+      "name_en": "The Star",
+      "arcana": "major",
+      "keywords": "Надежда"
+    },
+    {
+      "id": 18,
+      "name": "Луна",
+      "name_en": "The Moon",
+      "arcana": "major",
+      "keywords": "Иллюзии"
+    },
+    {
+      "id": 19,
+      "name": "Солнце",
+      "name_en": "The Sun",
+      "arcana": "major",
+      "keywords": "Радость"
+    },
+    {
+      "id": 20,
+      "name": "Суд",
+      "name_en": "Judgement",
+      "arcana": "major",
+      "keywords": "Возрождение"
+    },
+    {
+      "id": 21,
+      "name": "Мир",
+      "name_en": "The World",
+      "arcana": "major",
+      "keywords": "Завершение"
+    }
+  ]
+}

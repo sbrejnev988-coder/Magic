@@ -1,0 +1,225 @@
+{
+  "deck_name": "Rider-Waite",
+  "cards": [
+    {
+      "id": 0,
+      "name": "Шут",
+      "name_en": "The Fool",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Новые начинания, приключения, свобода, невинность, спонтанность",
+      "meaning_reversed": "Безрассудство, риск, задержки, нерешительность"
+    },
+    {
+      "id": 1,
+      "name": "Маг",
+      "name_en": "The Magician",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Воля, мастерство, концентрация, проявление",
+      "meaning_reversed": "Манипуляции, слабость, нерешительность"
+    },
+    {
+      "id": 2,
+      "name": "Верховная Жрица",
+      "name_en": "The High Priestess",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Интуиция, тайны, подсознание, мудрость",
+      "meaning_reversed": "Скрытые мотивы, поверхностность, игнорирование интуиции"
+    },
+    {
+      "id": 3,
+      "name": "Императрица",
+      "name_en": "The Empress",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Изобилие, природа, материнство, творчество",
+      "meaning_reversed": "Зависимость, подавленность, бесплодие"
+    },
+    {
+      "id": 4,
+      "name": "Император",
+      "name_en": "The Emperor",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Авторитет, структура, контроль, стабильность",
+      "meaning_reversed": "Тирания, жесткость, незрелость"
+    },
+    {
+      "id": 5,
+      "name": "Иерофант",
+      "name_en": "The Hierophant",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Традиция, духовность, обучение, вера",
+      "meaning_reversed": "Догматизм, ограничения, лицемерие"
+    },
+    {
+      "id": 6,
+      "name": "Влюблённые",
+      "name_en": "The Lovers",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Любовь, гармония, выбор, взаимоотношения",
+      "meaning_reversed": "Конфликт, разрыв, неверный выбор"
+    },
+    {
+      "id": 7,
+      "name": "Колесница",
+      "name_en": "The Chariot",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Победа, контроль, движение, решимость",
+      "meaning_reversed": "Поражение, отсутствие контроля, застой"
+    },
+    {
+      "id": 8,
+      "name": "Сила",
+      "name_en": "Strength",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Сила духа, храбрость, сострадание, влияние",
+      "meaning_reversed": "Слабость, страх, неуверенность, жестокость"
+    },
+    {
+      "id": 9,
+      "name": "Отшельник",
+      "name_en": "The Hermit",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Самоанализ, уединение, поиск истины, мудрость",
+      "meaning_reversed": "Изоляция, одиночество, отказ от помощи"
+    },
+    {
+      "id": 10,
+      "name": "Колесо Фортуны",
+      "name_en": "Wheel of Fortune",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Судьба, циклы, удача, перемены, возможность",
+      "meaning_reversed": "Неудача, сопротивление переменам, застой"
+    },
+    {
+      "id": 11,
+      "name": "Правосудие",
+      "name_en": "Justice",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Баланс, справедливость, карма, последствия, закон",
+      "meaning_reversed": "Несправедливость, предвзятость, дисбаланс"
+    },
+    {
+      "id": 12,
+      "name": "Повешенный",
+      "name_en": "The Hanged Man",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Жертва, отпускание, новая перспектива, пауза",
+      "meaning_reversed": "Застой, мученичество, бесполезная жертва"
+    },
+    {
+      "id": 13,
+      "name": "Смерть",
+      "name_en": "Death",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Преобразование, конец, возрождение, переход",
+      "meaning_reversed": "Сопротивление переменам, застой, страх потери"
+    },
+    {
+      "id": 14,
+      "name": "Умеренность",
+      "name_en": "Temperance",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Баланс, гармония, терпение, исцеление, умеренность",
+      "meaning_reversed": "Дисбаланс, излишества, нетерпение"
+    },
+    {
+      "id": 15,
+      "name": "Дьявол",
+      "name_en": "The Devil",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Искушение, зависимость, материализм, порабощение",
+      "meaning_reversed": "Освобождение, преодоление ограничений, духовность"
+    },
+    {
+      "id": 16,
+      "name": "Башня",
+      "name_en": "The Tower",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Внезапные изменения, разрушение, пробуждение, освобождение",
+      "meaning_reversed": "Страх перемен, отсрочка неизбежного, сопротивление"
+    },
+    {
+      "id": 17,
+      "name": "Звезда",
+      "name_en": "The Star",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Надежда, вдохновение, духовность, обновление, вера",
+      "meaning_reversed": "Разочарование, пессимизм, потеря веры"
+    },
+    {
+      "id": 18,
+      "name": "Луна",
+      "name_en": "The Moon",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Иллюзии, подсознание, интуиция, тайны, сны",
+      "meaning_reversed": "Обман, скрытые страхи, путаница, неясность"
+    },
+    {
+      "id": 19,
+      "name": "Солнце",
+      "name_en": "The Sun",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Радость, успех, жизненная сила, ясность, счастье",
+      "meaning_reversed": "Временные трудности, задержки, недостаток энергии"
+    },
+    {
+      "id": 20,
+      "name": "Суд",
+      "name_en": "Judgement",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Возрождение, призыв, самооценка, прощение, решение",
+      "meaning_reversed": "Сомнения, самокритика, страх оценки, застой"
+    },
+    {
+      "id": 21,
+      "name": "Мир",
+      "name_en": "The World",
+      "arcana": "major",
+      "suit": null,
+      "value": null,
+      "meaning_upright": "Завершение, достижение, путешествие, целостность, успех",
+      "meaning_reversed": "Незавершенность, отсутствие закрытия, задержки"
+    }
+  ]
+}
