@@ -1,10 +1,13 @@
 """
-MysticBot — точка входа
+MysticBot вЂ” С‚РѕС‡РєР° РІС…РѕРґР°
 """
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import asyncio
 import logging
-from pathlib import Path
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
@@ -12,7 +15,7 @@ from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from bot.config import Settings
 from bot.database.engine import create_engine, get_session_maker
 from bot.models.base import Base
-import bot.models  # регистрация всех моделей в Base.metadata
+import bot.models  # СЂРµРіРёСЃС‚СЂР°С†РёСЏ РІСЃРµС… РјРѕРґРµР»РµР№ РІ Base.metadata
 from bot.middlewares.throttling import ThrottlingMiddleware
 from bot.middlewares.auth import AuthMiddleware
 from bot.handlers.start import router as start_router
@@ -40,7 +43,7 @@ from bot.services.llm import shutdown_llm_service
 
 
 def setup_logging(level: str):
-    """Настройка логирования"""
+    """РќР°СЃС‚СЂРѕР№РєР° Р»РѕРіРёСЂРѕРІР°РЅРёСЏ"""
     Path("logs").mkdir(exist_ok=True)
     logging.basicConfig(
         level=getattr(logging, level.upper(), logging.INFO),
@@ -56,24 +59,24 @@ def setup_logging(level: str):
 
 
 async def main():
-    """Основная функция запуска"""
+    """РћСЃРЅРѕРІРЅР°СЏ С„СѓРЅРєС†РёСЏ Р·Р°РїСѓСЃРєР°"""
     settings = Settings()
     setup_logging(settings.LOG_LEVEL)
     log = logging.getLogger("main")
 
     log.info("=" * 60)
-    log.info("ЗАПУСК MYSTICBOT")
+    log.info("Р—РђРџРЈРЎРљ MYSTICBOT")
     log.info("=" * 60)
 
     if not settings.BOT_TOKEN:
-        log.critical("BOT_TOKEN не задан!")
+        log.critical("BOT_TOKEN РЅРµ Р·Р°РґР°РЅ!")
         return
 
-    # Проверка конфигурации
+    # РџСЂРѕРІРµСЂРєР° РєРѕРЅС„РёРіСѓСЂР°С†РёРё
     if not settings.is_database_configured:
-        log.warning("База данных не настроена. Некоторые функции будут ограничены.")
+        log.warning("Р‘Р°Р·Р° РґР°РЅРЅС‹С… РЅРµ РЅР°СЃС‚СЂРѕРµРЅР°. РќРµРєРѕС‚РѕСЂС‹Рµ С„СѓРЅРєС†РёРё Р±СѓРґСѓС‚ РѕРіСЂР°РЅРёС‡РµРЅС‹.")
 
-    # Инициализация базы данных
+    # РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Р±Р°Р·С‹ РґР°РЅРЅС‹С…
     db_engine = None
     session_maker = None
     if settings.is_database_configured:
@@ -81,13 +84,13 @@ async def main():
             db_engine = create_engine(settings.DATABASE_URL)
             session_maker = get_session_maker(db_engine)
             
-            # Создание таблиц, если их нет
+            # РЎРѕР·РґР°РЅРёРµ С‚Р°Р±Р»РёС†, РµСЃР»Рё РёС… РЅРµС‚
             async with db_engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
             
-            log.info("✅ База данных подключена")
+            log.info("вњ… Р‘Р°Р·Р° РґР°РЅРЅС‹С… РїРѕРґРєР»СЋС‡РµРЅР°")
         except Exception as e:
-            log.error("❌ Не удалось подключиться к базе данных: %s", e)
+            log.error("вќЊ РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕРґРєР»СЋС‡РёС‚СЊСЃСЏ Рє Р±Р°Р·Рµ РґР°РЅРЅС‹С…: %s", e)
             db_engine = None
 
     # Redis FSM storage
@@ -97,92 +100,109 @@ async def main():
             settings.REDIS_URL,
             key_builder=DefaultKeyBuilder(prefix="fsm", with_bot_id=True)
         )
-        log.info("✅ Redis FSM storage подключен")
+        log.info("вњ… Redis FSM storage РїРѕРґРєР»СЋС‡РµРЅ")
     except Exception as e:
-        log.warning("⚠️ Redis недоступен: %s. Использую memory storage.", e)
+        log.warning("вљ пёЏ Redis РЅРµРґРѕСЃС‚СѓРїРµРЅ: %s. РСЃРїРѕР»СЊР·СѓСЋ memory storage.", e)
         from aiogram.fsm.storage.memory import MemoryStorage
         fsm_storage = MemoryStorage()
 
-    # Бот и диспетчер
-    bot = Bot(token=settings.BOT_TOKEN)
-    dp = Dispatcher(storage=fsm_storage)
+    # РћСЃРЅРѕРІРЅРѕР№ Р±Р»РѕРє СЃ graceful shutdown
+    try:
+        # Р‘РѕС‚ Рё РґРёСЃРїРµС‚С‡РµСЂ
+        bot = Bot(token=settings.BOT_TOKEN)
+        dp = Dispatcher(storage=fsm_storage)
 
-    # Middleware
-    dp.message.middleware(ThrottlingMiddleware(rate_limit=settings.RATE_LIMIT, window=settings.RATE_WINDOW))
-    dp.message.middleware(AuthMiddleware(session_maker))
+        # Р РµРіРёСЃС‚СЂР°С†РёСЏ graceful shutdown
+        from bot.services.llm import shutdown_llm_service
+        dp.shutdown.register(shutdown_llm_service)
+        if db_engine:
+            dp.shutdown.register(db_engine.dispose)
 
-    # Роутеры
-    dp.include_router(start_router)
-    
-    if settings.ENABLE_TAROT:
-        dp.include_router(tarot_router)
-        log.info("✅ Модуль Таро активирован")
-    
-    if settings.ENABLE_NUMEROLOGY:
-        dp.include_router(numerology_router)
-        log.info("✅ Нумерология активирована")
-    
-    if settings.ENABLE_HOROSCOPE:
-        dp.include_router(horoscope_router)
-        log.info("✅ Гороскопы активированы")
-    
-    if settings.ENABLE_FINANCE_CALENDAR:
-        dp.include_router(finance_calendar_router)
-        log.info("✅ Финансовый календарь активирован")
-    
-    if settings.ENABLE_DREAM:
-        dp.include_router(dream_router)
-        log.info("✅ Сонник активирован")
-    
-    if settings.ENABLE_RUNES:
-        dp.include_router(runes_router)
-        log.info("✅ Руны активированы")
-    
-    if settings.ENABLE_RANDOM:
-        dp.include_router(random_router)
-        log.info("✅ Рандомайзер активирован")
-    
-    if settings.ENABLE_ASK:
-        dp.include_router(ask_router)
-        log.info("✅ Консультация с AI активирована")
-    
-    if settings.ENABLE_ASTROLOGY:
-        dp.include_router(astrology_router)
-        log.info("✅ Астрология активирована")
-    
-    if settings.ENABLE_MEDITATION:
-        dp.include_router(meditation_router)
-        log.info("✅ Медитации активированы")
-    
-    dp.include_router(profile_router)
-    dp.include_router(history_router)
-    dp.include_router(orders_router)
-    dp.include_router(file_upload_router)
-    # dp.include_router(search_router)
-    dp.include_router(settings_router)
-    dp.include_router(heartbeat_router)
-    dp.include_router(admin_router)
-    dp.include_router(predictions_router)
-    dp.include_router(ai_mode_router)
+        # Middleware
+        dp.message.middleware(ThrottlingMiddleware(rate_limit=settings.RATE_LIMIT, window=settings.RATE_WINDOW))
+        dp.message.middleware(AuthMiddleware(session_maker))
 
-    # Запуск
-    await bot.delete_webhook(drop_pending_updates=True)
-    log.info("✅ Бот запущен. Ожидание сообщений...")
-    log.info("✅ Polling started")
-    await dp.start_polling(bot)
+        # Р РѕСѓС‚РµСЂС‹
+        dp.include_router(ai_mode_router)
+        dp.include_router(start_router)
+        
+        if settings.ENABLE_TAROT:
+            dp.include_router(tarot_router)
+            log.info("вњ… РњРѕРґСѓР»СЊ РўР°СЂРѕ Р°РєС‚РёРІРёСЂРѕРІР°РЅ")
+        
+        if settings.ENABLE_NUMEROLOGY:
+            dp.include_router(numerology_router)
+            log.info("вњ… РќСѓРјРµСЂРѕР»РѕРіРёСЏ Р°РєС‚РёРІРёСЂРѕРІР°РЅР°")
+        
+        if settings.ENABLE_HOROSCOPE:
+            dp.include_router(horoscope_router)
+            log.info("вњ… Р“РѕСЂРѕСЃРєРѕРїС‹ Р°РєС‚РёРІРёСЂРѕРІР°РЅС‹")
+        
+        if settings.ENABLE_FINANCE_CALENDAR:
+            dp.include_router(finance_calendar_router)
+            log.info("вњ… Р¤РёРЅР°РЅСЃРѕРІС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ Р°РєС‚РёРІРёСЂРѕРІР°РЅ")
+        
+        if settings.ENABLE_DREAM:
+            dp.include_router(dream_router)
+            log.info("вњ… РЎРѕРЅРЅРёРє Р°РєС‚РёРІРёСЂРѕРІР°РЅ")
+        
+        if settings.ENABLE_RUNES:
+            dp.include_router(runes_router)
+            log.info("вњ… Р СѓРЅС‹ Р°РєС‚РёРІРёСЂРѕРІР°РЅС‹")
+        
+        if settings.ENABLE_RANDOM:
+            dp.include_router(random_router)
+            log.info("вњ… Р Р°РЅРґРѕРјР°Р№Р·РµСЂ Р°РєС‚РёРІРёСЂРѕРІР°РЅ")
+        
+        if settings.ENABLE_ASK:
+            dp.include_router(ask_router)
+            log.info("вњ… РљРѕРЅСЃСѓР»СЊС‚Р°С†РёСЏ СЃ AI Р°РєС‚РёРІРёСЂРѕРІР°РЅР°")
+        
+        if settings.ENABLE_ASTROLOGY:
+            dp.include_router(astrology_router)
+            log.info("вњ… РђСЃС‚СЂРѕР»РѕРіРёСЏ Р°РєС‚РёРІРёСЂРѕРІР°РЅР°")
+        
+        if settings.ENABLE_MEDITATION:
+            dp.include_router(meditation_router)
+            log.info("вњ… РњРµРґРёС‚Р°С†РёРё Р°РєС‚РёРІРёСЂРѕРІР°РЅС‹")
+        
+        dp.include_router(profile_router)
+        dp.include_router(history_router)
+        dp.include_router(orders_router)
+        dp.include_router(file_upload_router)
+        # dp.include_router(search_router)
+        dp.include_router(settings_router)
+        dp.include_router(heartbeat_router)
+        dp.include_router(admin_router)
+        dp.include_router(predictions_router)
+
+        # Р—Р°РїСѓСЃРє
+        await bot.delete_webhook(drop_pending_updates=True)
+        log.info("вњ… Р‘РѕС‚ Р·Р°РїСѓС‰РµРЅ. РћР¶РёРґР°РЅРёРµ СЃРѕРѕР±С‰РµРЅРёР№...")
+        log.info("вњ… Polling started")
+        await dp.start_polling(bot)
+    finally:
+        # Graceful shutdown: Р·Р°РєСЂС‹С‚РёРµ СЂРµСЃСѓСЂСЃРѕРІ
+        if db_engine:
+            try:
+                await db_engine.dispose()
+                log.info("вњ… Р‘Р°Р·Р° РґР°РЅРЅС‹С… РѕС‚РєР»СЋС‡РµРЅР°")
+            except Exception as e:
+                log.error(f"РћС€РёР±РєР° РїСЂРё РѕС‚РєР»СЋС‡РµРЅРёРё Р±Р°Р·С‹ РґР°РЅРЅС‹С…: {e}")
+        if fsm_storage and hasattr(fsm_storage, 'close'):
+            try:
+                fsm_storage.close()
+                log.info("вњ… Redis FSM storage Р·Р°РєСЂС‹С‚")
+            except Exception as e:
+                log.error(f"РћС€РёР±РєР° РїСЂРё Р·Р°РєСЂС‹С‚РёРё Redis storage: {e}")
+        log.info("вњ… Р РµСЃСѓСЂСЃС‹ РѕСЃРІРѕР±РѕР¶РґРµРЅС‹")
 
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main(), debug=True)
+        asyncio.run(main(), debug=False)
     except KeyboardInterrupt:
-        print("\nБот остановлен.")
+        print("\nР‘РѕС‚ РѕСЃС‚Р°РЅРѕРІР»РµРЅ.")
     except Exception as e:
-        logging.critical("Критическая ошибка: %s", e)
+        logging.critical("РљСЂРёС‚РёС‡РµСЃРєР°СЏ РѕС€РёР±РєР°: %s", e)
         raise
-    finally:
-        # Закрытие LLM сервиса
-        try:
-            asyncio.run(shutdown_llm_service())
-        except Exception:
-            pass
