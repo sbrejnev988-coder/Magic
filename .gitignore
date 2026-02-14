@@ -82,3 +82,4 @@ dmypy.json
 # Telethon sessions
 *.session
 *.session-journal
+\n# GitHub token (local)\ngithub_token.txt\n
