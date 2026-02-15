@@ -37,6 +37,9 @@ from bot.handlers.file_upload import router as file_upload_router
 from bot.handlers.settings import router as settings_router
 from bot.handlers.heartbeat import router as heartbeat_router
 from bot.handlers.predictions import router as predictions_router
+from bot.handlers.consultant import router as consultant_router
+from bot.handlers.consultant_start import router as consultant_start_router
+from bot.handlers.admin_search import router as admin_search_router
 from bot.services.llm import get_llm_service
 
 
@@ -171,6 +174,9 @@ async def main():
         ("ask", ask_router, "AI-консультация"),
         ("astrology", astrology_router, "Астрология"),
         ("meditation", meditation_router, "Медитации"),
+        ("consultant", consultant_router, "Консультант"),
+        ("consultant_start", consultant_start_router, "Консультант старт"),
+        ("admin_search", admin_search_router, "Админ поиск"),
     ]
 
     for feature_key, router, name in feature_routers:
