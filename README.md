@@ -56,3 +56,5 @@ docker-compose up -d --build
 
 ## Лицензия
 MIT
+
+<!-- Auto‑updated by OpenClaw at 2026-02-15T05:01:59.698745Z -->
