@@ -13,7 +13,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.services.prediction_history_service import PredictionHistoryService
 from bot.models.prediction_history import PredictionType
-from bot.database.engine import get_session_maker
+from bot.database.engine import get_session_maker, create_engine
+from bot.config import settings
 
 router = Router()
 log = logging.getLogger(__name__)
@@ -216,7 +217,8 @@ async def generate_runes_reading(message: Message, state: FSMContext, question: 
     
     # Сохраняем в историю предсказаний
     try:
-        async with get_session_maker()() as session:
+        engine = create_engine(settings.database.url)
+        async with get_session_maker(engine)() as session:
             await PredictionHistoryService.create_prediction(
                 session=session,
                 user_id=message.from_user.id,
