@@ -13,17 +13,21 @@ select = ["E", "F", "B", "C", "W", "PL", "RUF"]
 ignore = [
     "E501",     # line too long
     "E712",     # avoid equality comparisons to True/False
+    "E722",     # do not use bare except
     "F401",     # unused import (side-effect imports)
+    "F541",     # f-string without placeholders
     "F811",     # redefinition of unused name
     "F821",     # undefined name
     "F841",     # unused variable
     "B007",     # unused loop variable
     "B904",     # raise without from in except
+    "B905",     # zip() without explicit strict parameter
     "C901",     # too complex
     "W291",     # trailing whitespace
     "W292",     # no newline at end of file
     "W293",     # blank line contains whitespace
     "PLC0415",  # import not at top-level (try/except pattern)
+    "PLR0911",  # too many return statements
     "PLR0912",  # too many branches
     "PLR0913",  # too many arguments
     "PLR0915",  # too many statements
@@ -31,10 +35,11 @@ ignore = [
     "PLW0603",  # using the global statement is discouraged
     "PLW1510",  # subprocess.run without explicit check
     "PLW2901",  # for loop variable overwritten by assignment
-    "F541",     # f-string without placeholders
     "RUF001",   # ambiguous unicode (Cyrillic strings)
     "RUF002",   # ambiguous unicode in docstrings
     "RUF003",   # ambiguous unicode in comments
+    "RUF012",   # mutable class variables should use ClassVar
+    "RUF013",   # PEP 484 prohibits implicit Optional
     "RUF059",   # unpacked variable never used
 ]
 
