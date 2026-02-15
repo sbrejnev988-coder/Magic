@@ -13,17 +13,15 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from bot.services.order import OrderService, OrderStatus
 from bot.services.hybrid_draft import HybridDraftService
 from bot.database.engine import get_session_maker
-from bot.config import Settings
+from bot.config import settings
 
 log = logging.getLogger(__name__)
 
 router = Router()
-settings = Settings()
-
 
 def is_admin(user_id: int) -> bool:
     """Проверка прав администратора"""
-    return user_id == settings.ADMIN_USER_ID
+    return user_id == settings.telegram.admin_user_id
 
 
 @router.message(Command("admin"))
@@ -210,7 +208,7 @@ async def handle_add_note(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.message(F.text & F.from_user.id == settings.ADMIN_USER_ID)
+@router.message(F.text & F.from_user.id == settings.telegram.admin_user_id)
 async def handle_admin_note(message: Message, state: FSMContext):
     """Обработчик текстовых сообщений администратора для добавления заметки"""
     data = await state.get_data()
@@ -540,7 +538,7 @@ async def handle_edit_draft_admin(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.message(F.text & F.from_user.id == settings.ADMIN_USER_ID)
+@router.message(F.text & F.from_user.id == settings.telegram.admin_user_id)
 async def handle_admin_edited_draft(message: Message, state: FSMContext):
     """Обработчик отредактированного черновика администратором"""
     data = await state.get_data()
@@ -610,7 +608,7 @@ async def handle_reject_draft(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.message(F.text & F.from_user.id == settings.ADMIN_USER_ID)
+@router.message(F.text & F.from_user.id == settings.telegram.admin_user_id)
 async def handle_admin_reject_reason(message: Message, state: FSMContext):
     """Обработчик причины отклонения черновика"""
     data = await state.get_data()
