@@ -12,7 +12,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.services.order import OrderService, OrderStatus
 from bot.services.hybrid_draft import HybridDraftService
-from bot.database.engine import get_session_maker
+from bot.database.engine import get_session_maker, create_engine
 from bot.config import settings
 
 log = logging.getLogger(__name__)
@@ -99,7 +99,10 @@ async def cmd_admin_orders(message: Message):
         await message.answer("⛔️ Доступ запрещён.")
         return
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         order_service = OrderService(session)
         
         # Получаем неоплаченные заказы
@@ -158,7 +161,10 @@ async def handle_confirm_payment(callback: CallbackQuery):
         await callback.answer("❌ Ошибка формата.", show_alert=True)
         return
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         order_service = OrderService(session)
         order = await order_service.get_order_by_id(order_id)
         
@@ -217,7 +223,9 @@ async def handle_admin_note(message: Message, state: FSMContext):
     if order_id:
         note_text = message.text.strip()
         if note_text:
-            async with get_session_maker()() as session:
+            engine = create_engine(settings.database.url)
+
+            async with get_session_maker(engine)() as session:
                 order_service = OrderService(session)
                 await order_service.add_admin_notes(order_id, note_text)
                 
@@ -240,7 +248,10 @@ async def handle_order_details(callback: CallbackQuery):
         await callback.answer("❌ Ошибка формата.", show_alert=True)
         return
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         order_service = OrderService(session)
         order = await order_service.get_order_by_id(order_id)
         
@@ -281,7 +292,10 @@ async def handle_ocr_screenshot(callback: CallbackQuery):
         await callback.answer("❌ Ошибка формата.", show_alert=True)
         return
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         order_service = OrderService(session)
         order = await order_service.get_order_by_id(order_id)
         
@@ -381,7 +395,10 @@ async def cmd_admin_drafts(message: Message):
         await message.answer("⛔️ Доступ запрещён.")
         return
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         # Получаем черновики, ожидающие проверки
         pending_drafts = await HybridDraftService.get_pending_drafts(session, limit=20)
         
@@ -433,7 +450,10 @@ async def handle_view_draft(callback: CallbackQuery):
         await callback.answer("❌ Ошибка формата.", show_alert=True)
         return
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         draft = await HybridDraftService.get_draft_by_id(session, draft_id)
         
         if not draft:
@@ -479,7 +499,10 @@ async def handle_approve_draft(callback: CallbackQuery):
         await callback.answer("❌ Ошибка формата.", show_alert=True)
         return
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         draft = await HybridDraftService.approve_draft(
             session=session,
             draft_id=draft_id,
@@ -553,7 +576,10 @@ async def handle_admin_edited_draft(message: Message, state: FSMContext):
         await message.answer("❌ Текст не может быть пустым.")
         return
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         draft = await HybridDraftService.approve_draft(
             session=session,
             draft_id=draft_id,
@@ -623,7 +649,10 @@ async def handle_admin_reject_reason(message: Message, state: FSMContext):
         await message.answer("❌ Причина не может быть пустой.")
         return
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         draft = await HybridDraftService.reject_draft(
             session=session,
             draft_id=draft_id,
