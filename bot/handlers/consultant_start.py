@@ -10,11 +10,11 @@ from aiogram.filters import CommandStart, Command
 from aiogram.types import Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot.config import Settings
+from bot.config import settings
 
 router = Router()
-settings = Settings()
-logging.getLogger(__name__).info(f"Consultant start module loaded. ADMIN_USER_ID={settings.ADMIN_USER_ID}")
+
+logging.getLogger(__name__).info(f"Consultant start module loaded. ADMIN_USER_ID={settings.telegram.admin_user_id}")
 
 
 def is_consultant(user_id: int) -> bool:
@@ -23,7 +23,7 @@ def is_consultant(user_id: int) -> bool:
     log = logging.getLogger(__name__)
     # Приводим оба значения к int для надёжности
     user_id_int = int(user_id)
-    admin_id_int = int(settings.ADMIN_USER_ID)
+    admin_id_int = int(settings.telegram.admin_user_id)
     
     result = user_id_int == admin_id_int
     log.info(f"CONSULTANT_START: Проверка прав: user_id={user_id_int}, ADMIN_USER_ID={admin_id_int}, результат={result}")
@@ -84,7 +84,7 @@ async def cmd_debug(message: Message):
     import logging
     log = logging.getLogger(__name__)
     user_id = message.from_user.id
-    admin_id = settings.ADMIN_USER_ID
+    admin_id = settings.telegram.admin_user_id
     is_consult = user_id == admin_id
     log.info(f"DEBUG: user_id={user_id}, admin_id={admin_id}, is_consult={is_consult}")
     
