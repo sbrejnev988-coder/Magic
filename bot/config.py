@@ -7,6 +7,7 @@ import os
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import List
 from dotenv import load_dotenv
 
 # Загружаем .env из корня проекта
@@ -51,7 +52,7 @@ class FeatherlessConfig:
     api_key: str = ""
     base_url: str = "https://api.featherless.ai/v1"
     model: str = "zai-org/GLM-4.7-Flash"
-    timeout: int = 180          # секунды (холодный старт модели)
+    timeout: int = 120          # секунды (холодный старт модели)
     max_retries: int = 3        # retry при 503
     retry_delay: float = 30.0   # пауза между retry (сек)
     enabled: bool = False
@@ -110,9 +111,9 @@ class Settings:
     log_level: str = "INFO"
 
     @property
-    def llm_providers_order(self) -> list[str]:
+    def llm_providers_order(self) -> List[str]:
         """Список активных провайдеров в порядке приоритета."""
-        providers = []
+        providers: List[str] = []
         if self.featherless.enabled:
             providers.append("featherless")
         if self.perplexity.enabled:
@@ -136,7 +137,7 @@ def load_settings() -> Settings:
     Возвращает Settings. Не кидает исключений — 
     при отсутствии ключей провайдер помечается enabled=False.
     """
-    warnings: list[str] = []
+    warnings: List[str] = []
 
     # --- Telegram ---
     bot_token = os.getenv("BOT_TOKEN", "").strip()
@@ -149,7 +150,9 @@ def load_settings() -> Settings:
         warnings.append(f"ADMIN_USER_ID='{admin_id_raw}' — не число, установлено 0")
 
     if not bot_token:
-        warnings.append("BOT_TOKEN не указан — бот не сможет запуститься")
+        warnings.append("⚠️ BOT_TOKEN не указан — бот не сможет запуститься")
+    elif len(bot_token) < 40:
+        warnings.append("⚠️ BOT_TOKEN слишком короткий, проверьте корректность")
 
     telegram = TelegramConfig(bot_token=bot_token, admin_user_id=admin_user_id)
 
@@ -165,21 +168,28 @@ def load_settings() -> Settings:
         os.getenv("FEATHERLESS_ENDPOINT", "https://api.featherless.ai/v1")
     ).strip().rstrip("/")
     fl_model = os.getenv("FEATHERLESS_MODEL", "zai-org/GLM-4.7-Flash").strip()
-    fl_timeout = _parse_int(os.getenv("FEATHERLESS_TIMEOUT", "180"), 180)
+    fl_timeout = _parse_int(os.getenv("FEATHERLESS_TIMEOUT", "120"), 120)
     fl_retries = _parse_int(os.getenv("FEATHERLESS_MAX_RETRIES", "3"), 3)
 
-    # Валидация base_url
-    if fl_key and not fl_base.endswith("/v1"):
-        warnings.append(
-            f"FEATHERLESS_BASE_URL='{fl_base}' не заканчивается на /v1. "
-            f"Правильный формат: https://api.featherless.ai/v1"
-        )
-    # Валидация модели
-    if fl_key and "/" not in fl_model:
-        warnings.append(
-            f"FEATHERLESS_MODEL='{fl_model}' — нет '/' (HuggingFace формат). "
-            f"Пример: zai-org/GLM-4.7-Flash"
-        )
+    # Улучшенная валидация base_url
+    if fl_key:
+        if not fl_base.startswith(("http://", "https://")):
+            warnings.append(
+                f"⚠️ FEATHERLESS_BASE_URL='{fl_base}' не начинается с http:// или https://"
+            )
+        if not (fl_base.endswith("/v1") or fl_base.endswith("/v1/")):
+            warnings.append(
+                f"⚠️ FEATHERLESS_BASE_URL='{fl_base}' не заканчивается на /v1. "
+                f"Правильный формат: https://api.featherless.ai/v1"
+            )
+        # Валидация модели
+        if "/" not in fl_model:
+            warnings.append(
+                f"⚠️ FEATHERLESS_MODEL='{fl_model}' — нет '/' (HuggingFace формат). "
+                f"Пример: zai-org/GLM-4.7-Flash"
+            )
+        if len(fl_key) < 20:
+            warnings.append("⚠️ FEATHERLESS_API_KEY слишком короткий")
 
     featherless = FeatherlessConfig(
         api_key=fl_key,
@@ -194,6 +204,9 @@ def load_settings() -> Settings:
     px_key = os.getenv("PERPLEXITY_API_KEY", "").strip()
     px_model = os.getenv("PERPLEXITY_MODEL", "sonar-pro").strip()
 
+    if px_key and len(px_key) < 20:
+        warnings.append("⚠️ PERPLEXITY_API_KEY слишком короткий")
+
     perplexity = PerplexityConfig(
         api_key=px_key,
         model=px_model,
@@ -203,6 +216,9 @@ def load_settings() -> Settings:
     # --- OpenAI ---
     oai_key = os.getenv("OPENAI_API_KEY", "").strip()
     oai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
+
+    if oai_key and len(oai_key) < 20:
+        warnings.append("⚠️ OPENAI_API_KEY слишком короткий")
 
     openai_cfg = OpenAIConfig(
         api_key=oai_key,
