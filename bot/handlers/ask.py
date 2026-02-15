@@ -14,12 +14,11 @@ from bot.services.llm import get_llm_service
 from bot.services.history import ConsultationHistory
 from bot.services.user_settings import UserSettingsService
 from bot.services.order import OrderService
-from bot.database.engine import get_session_maker
-from bot.config import Settings
+from bot.database.engine import get_session_maker, create_engine
+from bot.config import settings
 
 router = Router()
 log = logging.getLogger(__name__)
-settings = Settings()
 
 
 # Состояния для консультации
@@ -41,7 +40,8 @@ async def cmd_ask(message: Message, state: FSMContext):
     
     user_id = message.from_user.id
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+    async with get_session_maker(engine)() as session:
         # Проверяем, является ли пользователь платным подписчиком
         order_service = OrderService(session)
         is_premium = await order_service.has_paid_order(user_id)
@@ -107,7 +107,8 @@ async def process_ai_question(message: Message, state: FSMContext, session_maker
     # Создаём сессию, если не передана
     local_session = None
     if not session_maker:
-        session_maker = get_session_maker()
+        engine = create_engine(settings.database.url)
+        session_maker = get_session_maker(engine)
     
     # Проверяем лимиты и платный статус перед генерацией
     async with session_maker() as session:
