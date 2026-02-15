@@ -30,6 +30,17 @@ services:
       timeout: 5s
       retries: 5
 
+  migrations:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://mystic:mysticpass@postgres/mysticbot
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+
   bot:
     build: .
     depends_on:
@@ -37,6 +48,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     env_file: .env
     environment:
       DATABASE_URL: postgresql://mystic:mysticpass@postgres/mysticbot
@@ -45,7 +58,13 @@ services:
       - ./data:/app/data
       - ./uploads:/app/uploads
     restart: unless-stopped
-    command: ["python", "bot/main.py"]
+    command: ["python", "-m", "bot.main"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   admin_bot:
     build: .
@@ -54,6 +73,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     env_file: .env
     environment:
       DATABASE_URL: postgresql://mystic:mysticpass@postgres/mysticbot
@@ -63,6 +84,12 @@ services:
       - ./uploads:/app/uploads
     restart: unless-stopped
     command: ["python", "admin_bot.py"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   postgres_data:
