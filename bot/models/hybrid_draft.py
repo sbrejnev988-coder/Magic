@@ -4,7 +4,10 @@
 
 import enum
 from datetime import datetime
-from sqlalchemy import Column, Integer, BigInteger, String, Text, DateTime, Enum, Boolean
+from typing import Optional
+
+from sqlalchemy import BigInteger, Enum, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from .base import Base
@@ -12,39 +15,39 @@ from .base import Base
 
 class DraftStatus(enum.Enum):
     """Статусы черновика"""
-    PENDING = "pending"          # ожидает проверки
-    APPROVED = "approved"        # проверен и одобрен
-    EDITED = "edited"           # проверен и отредактирован
-    REJECTED = "rejected"       # отклонён
-    SENT = "sent"               # отправлен пользователю
+    PENDING = "pending"        # ожидает проверки
+    APPROVED = "approved"      # проверен и одобрен
+    EDITED = "edited"          # проверен и отредактирован
+    REJECTED = "rejected"      # отклонён
+    SENT = "sent"              # отправлен пользователю
 
 
 class HybridDraft(Base):
     """Черновик гибридного режима для проверки человеком"""
     __tablename__ = "hybrid_drafts"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(BigInteger, nullable=False, index=True)      # ID пользователя Telegram
-    username = Column(String(100), nullable=True)                 # @username
-    first_name = Column(String(100), nullable=True)               # имя пользователя
-    
-    question = Column(Text, nullable=False)                       # вопрос пользователя
-    ai_draft = Column(Text, nullable=False)                       # черновик, сгенерированный ИИ
-    final_answer = Column(Text, nullable=True)                    # финальный ответ после проверки
-    
-    status = Column(Enum(DraftStatus), default=DraftStatus.PENDING, nullable=False)
-    
-    reviewer_id = Column(BigInteger, nullable=True)               # ID проверяющего (администратора)
-    reviewer_notes = Column(Text, nullable=True)                  # заметки проверяющего
-    
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    reviewed_at = Column(DateTime, nullable=True)                 # когда проверен
-    sent_at = Column(DateTime, nullable=True)                     # когда отправлен пользователю
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)  # ID пользователя Telegram
+    username: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # @username
+    first_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # имя пользователя
 
-    def __repr__(self):
+    question: Mapped[str] = mapped_column(Text, nullable=False)  # вопрос пользователя
+    ai_draft: Mapped[str] = mapped_column(Text, nullable=False)  # черновик, сгенерированный ИИ
+    final_answer: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # финальный ответ после проверки
+
+    status: Mapped[DraftStatus] = mapped_column(Enum(DraftStatus), default=DraftStatus.PENDING, nullable=False)
+
+    reviewer_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)  # ID проверяющего (администратора)
+    reviewer_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # заметки проверяющего
+
+    created_at: Mapped[datetime] = mapped_column(default=func.now(), nullable=False)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)  # когда проверен
+    sent_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)  # когда отправлен пользователю
+
+    def __repr__(self) -> str:
         return f"<HybridDraft(id={self.id}, user_id={self.user_id}, status={self.status})>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, object]:
         """Преобразование в словарь для JSON"""
         return {
             "id": self.id,
