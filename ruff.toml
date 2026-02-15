@@ -31,6 +31,7 @@ ignore = [
     "PLR0912",  # too many branches
     "PLR0913",  # too many arguments
     "PLR0915",  # too many statements
+    "PLR1730",  # replace if statement with min/max call
     "PLR2004",  # magic value in comparison
     "PLW0603",  # using the global statement is discouraged
     "PLW1510",  # subprocess.run without explicit check
@@ -40,6 +41,7 @@ ignore = [
     "RUF003",   # ambiguous unicode in comments
     "RUF012",   # mutable class variables should use ClassVar
     "RUF013",   # PEP 484 prohibits implicit Optional
+    "RUF022",   # __all__ is not sorted
     "RUF059",   # unpacked variable never used
 ]
 
