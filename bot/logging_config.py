@@ -96,10 +96,16 @@ def setup_logging(
         file_handler.setLevel(level)
         root_logger.addHandler(file_handler)
 
-    # Убираем пропагацию до корневого логгера для библиотечных логгеров
-    logging.getLogger("aiogram").propagate = False
-    logging.getLogger("aiohttp").propagate = False
-    logging.getLogger("sqlalchemy").propagate = False
+    # Настройка библиотечных логгеров: propagate=False + собственные хэндлеры
+    lib_level = logging.WARNING
+    for lib_name in ("aiogram", "aiohttp", "sqlalchemy"):
+        lib_logger = logging.getLogger(lib_name)
+        lib_logger.propagate = False
+        lib_logger.setLevel(lib_level)
+        lib_logger.handlers.clear()
+        lib_logger.addHandler(stdout_handler)
+        if log_file:
+            lib_logger.addHandler(file_handler)
 
     logging.info(
         "Логирование инициализировано: уровень=%s, json=%s, файл=%s",
