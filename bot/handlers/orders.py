@@ -15,14 +15,14 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.services.order import OrderService, OrderStatus
 from bot.database.engine import create_engine, get_session_maker
-from bot.config import Settings
+from bot.config import settings
 
 logger = logging.getLogger(__name__)
-settings = Settings()
+
 session_maker = None
-if settings.is_database_configured:
+if (settings.database.url is not None):
     try:
-        engine = create_engine(settings.DATABASE_URL)
+        engine = create_engine(settings.database.url)
         session_maker = get_session_maker(engine)
     except Exception as e:
         logger.error(f"Не удалось создать session_maker для заказов: {e}")
@@ -59,7 +59,7 @@ def extract_birth_date(text: str) -> str:
     return None
 
 
-async def notify_admin(bot, order, admin_user_id: int = settings.ADMIN_USER_ID):
+async def notify_admin(bot, order, admin_user_id: int = settings.telegram.admin_user_id):
     """Уведомить администратора о новом заказе"""
     try:
         text = (
@@ -175,7 +175,7 @@ async def process_order_data(message: Message, state: FSMContext):
 async def cmd_orders(message: Message):
     """Показать новые заказы (администратор)"""
     # Проверяем, является ли пользователь администратором
-    if message.from_user.id != settings.ADMIN_USER_ID:
+    if message.from_user.id != settings.telegram.admin_user_id:
         await message.answer("⛔️ Эта команда доступна только администратору.")
         return
 
