@@ -13,7 +13,8 @@ from aiogram.fsm.context import FSMContext
 
 from bot.services.prediction_history_service import PredictionHistoryService
 from bot.models.prediction_history import PredictionType
-from bot.database.engine import get_session_maker
+from bot.database.engine import get_session_maker, create_engine
+from bot.config import settings
 
 router = Router()
 log = logging.getLogger(__name__)
@@ -24,7 +25,10 @@ async def cmd_my_predictions(message: Message):
     """Показать историю предсказаний пользователя"""
     user_id = message.from_user.id
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         # Получаем статистику
         stats = await PredictionHistoryService.get_user_statistics(session, user_id)
         
@@ -84,7 +88,10 @@ async def handle_predictions_recent(callback: CallbackQuery):
     
     user_id = callback.from_user.id
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         predictions = await PredictionHistoryService.get_by_user(session, user_id, limit=limit)
         
         if not predictions:
@@ -113,7 +120,10 @@ async def handle_predictions_stats(callback: CallbackQuery):
     """Подробная статистика предсказаний"""
     user_id = callback.from_user.id
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         stats = await PredictionHistoryService.get_user_statistics(session, user_id)
         
         if stats["total"] == 0:
@@ -169,7 +179,10 @@ async def handle_predictions_clear_yes(callback: CallbackQuery):
     """Очистка истории предсказаний"""
     user_id = callback.from_user.id
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         # Получаем все ID предсказаний пользователя
         predictions = await PredictionHistoryService.get_by_user(session, user_id, limit=1000)
         deleted_count = 0
@@ -219,7 +232,10 @@ async def cmd_prediction_stats(message: Message):
     #     await message.answer("⛔️ У вас нет прав для просмотра статистики.")
     #     return
     
-    async with get_session_maker()() as session:
+    engine = create_engine(settings.database.url)
+
+    
+    async with get_session_maker(engine)() as session:
         stats = await PredictionHistoryService.get_global_statistics(session)
         
         stats_text = f"""
