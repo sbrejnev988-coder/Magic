@@ -265,9 +265,21 @@ async def cb_ai_exit(callback: CallbackQuery, state: FSMContext) -> None:
 
 async def _exit_ai_mode(message: Message, state: FSMContext, reason: str = "") -> None:
     """Общая логика выхода из ИИ-режима."""
+    # Проверяем, активна ли ещё ИИ-сессия (защита от двойного вызова)
+    current_state = await state.get_state()
+    if current_state != AIMode.active.state:
+        logger.debug(f"Выход из ИИ-режима проигнорирован: состояние уже {current_state}")
+        return
+    
     ctx = await _get_ai_context(state)
-    duration = time.time() - ctx["session_start"] if ctx["session_start"] else 0
-
+    # Если сессия не была начата (session_start == 0), не показываем статистику
+    if ctx["session_start"] <= 0:
+        await state.clear()
+        logger.info(f"ИИ-режим завершён (сессия не начата): {reason}")
+        return
+    
+    duration = time.time() - ctx["session_start"]
+    
     await state.clear()
 
     await message.answer(
