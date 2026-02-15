@@ -28,7 +28,7 @@ def build_main_keyboard() -> types.ReplyKeyboardMarkup:
     builder.row(types.KeyboardButton(text="🔘 Режим ИИ"))
     builder.row(types.KeyboardButton(text="🔄 Гибридный режим"))
     builder.row(types.KeyboardButton(text="💎 Консультация (777 ₽)"))
-    builder.row(types.KeyboardButton(text="👤 Профиль"))
+    builder.row(types.KeyboardButton(text="⭐ Избранное"), types.KeyboardButton(text="👤 Профиль"))
     return builder.as_markup(resize_keyboard=True)
 
 
