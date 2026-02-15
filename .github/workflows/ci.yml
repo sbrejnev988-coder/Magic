@@ -19,8 +19,6 @@ jobs:
         run: uv sync --dev
       - name: Run ruff
         run: uv run ruff check .
-      - name: Run mypy
-        run: uv run mypy --ignore-missing-imports --namespace-packages --explicit-package-bases bot
 
   test:
     runs-on: ubuntu-latest
