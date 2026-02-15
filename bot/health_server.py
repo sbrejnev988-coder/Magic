@@ -16,7 +16,7 @@ import logging
 import os
 import psutil
 import socket
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from aiohttp import web
@@ -46,13 +46,14 @@ async def health_handler(request: web.Request) -> web.Response:
     status = {
         "status": "healthy",
         "service": "mysticbot",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
         "uptime_seconds": uptime.total_seconds(),
         "pid": pid,
         "memory_rss_mb": process.memory_info().rss / 1024 / 1024,
         "cpu_percent": process.cpu_percent(),
         "database": "ok" if db_ok else "unavailable",
     }
+
     return web.Response(
         text=json.dumps(status, indent=2, ensure_ascii=False),
         content_type="application/json",
@@ -65,6 +66,7 @@ async def metrics_handler(request: web.Request) -> web.Response:
     metrics = "# HELP mysticbot_info Information about MysticBot\n"
     metrics += "# TYPE mysticbot_info gauge\n"
     metrics += 'mysticbot_info{version="1.0.0"} 1\n'
+
     return web.Response(text=metrics, content_type="text/plain; version=0.0.4")
 
 
@@ -72,15 +74,15 @@ async def root_handler(request: web.Request) -> web.Response:
     """Корневой эндпоинт с краткой информацией."""
     html = """
     <html>
-        <head><title>MysticBot Health Server</title></head>
-        <body>
-            <h1>MysticBot Health Server</h1>
-            <p>Сервер мониторинга и healthcheck для Telegram‑бота MysticBot.</p>
-            <ul>
-                <li><a href="/health">/health</a> — статус бота (JSON)</li>
-                <li><a href="/metrics">/metrics</a> — метрики Prometheus</li>
-            </ul>
-        </body>
+    <head><title>MysticBot Health Server</title></head>
+    <body>
+    <h1>MysticBot Health Server</h1>
+    <p>Сервер мониторинга и healthcheck для Telegram‑бота MysticBot.</p>
+    <ul>
+    <li><a href="/health">/health</a> — статус бота (JSON)</li>
+    <li><a href="/metrics">/metrics</a> — метрики Prometheus</li>
+    </ul>
+    </body>
     </html>
     """
     return web.Response(text=html, content_type="text/html")
@@ -100,7 +102,6 @@ async def start_health_server(
 ) -> web.TCPSite:
     """
     Запускает healthcheck сервер в фоне.
-
     Возвращает объект TCPSite (можно использовать для остановки).
     """
     app = create_app()
