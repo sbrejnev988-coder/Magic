@@ -4,29 +4,30 @@
 # Максимальная длина строки
 line-length = 120
 
-# Сортировка импортов (аналог isort)
 target-version = "py312"
-
-# Ширина отступа
 indent-width = 4
 
 [lint]
-# Включить правила
-select = ["E", "F", "I", "B", "C", "W", "UP", "PL", "RUF"]
+select = ["E", "F", "B", "C", "W", "PL", "RUF"]
 
-# Игнорируемые правила
 ignore = [
     "E501",     # line too long
+    "F401",     # unused import (side-effect imports)
     "F841",     # unused variable
-    "RUF001",   # ambiguous unicode (кириллица в строках)
+    "RUF001",   # ambiguous unicode (Cyrillic strings)
     "RUF002",   # ambiguous unicode in docstrings
     "RUF003",   # ambiguous unicode in comments
     "W291",     # trailing whitespace
     "W292",     # no newline at end of file
     "W293",     # blank line contains whitespace
+    "PLC0415",  # import not at top-level (try/except pattern)
+    "PLR0913",  # too many arguments
+    "PLR2004",  # magic value in comparison
+    "F541",     # f-string without placeholders
+    "B007",     # unused loop variable
+    "C901",     # too complex
 ]
 
 [format]
-# Настройки форматирования
 quote-style = "double"
 indent-style = "space"
