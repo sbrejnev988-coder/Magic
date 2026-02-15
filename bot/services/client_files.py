@@ -44,7 +44,7 @@ class ClientFilesService:
         return cls.get_client_path(user_id) / "audio"
     
     @classmethod
-    def ensure_client_directories(cls, user_id: int):
+    def ensure_client_directories(cls, user_id: int) -> None:
         """Создать папки клиента, если их нет."""
         paths = [
             cls.get_client_path(user_id),
@@ -200,4 +200,5 @@ class ClientFilesService:
             file_type=file_type
         )
         
+
         return file_record
