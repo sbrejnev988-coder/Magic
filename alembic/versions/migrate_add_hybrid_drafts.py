@@ -8,7 +8,7 @@ from sqlalchemy import text
 from bot.database.engine import create_engine, get_session_maker
 from bot.models.base import Base
 import bot.models  # регистрация всех моделей
-from bot.config import Settings
+from bot.config import settings
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -16,8 +16,8 @@ log = logging.getLogger(__name__)
 
 async def main():
     """Добавляем таблицу hybrid_drafts"""
-    settings = Settings()
-    engine = create_engine(settings.DATABASE_URL)
+
+    engine = create_engine(settings.database.url)
     
     log.info("Создаём таблицу hybrid_drafts...")
     
