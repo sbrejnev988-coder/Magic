@@ -104,8 +104,8 @@ class Settings:
     perplexity: PerplexityConfig = field(default_factory=PerplexityConfig)
     openai: OpenAIConfig = field(default_factory=OpenAIConfig)
     features: FeaturesConfig = field(default_factory=FeaturesConfig)
-    rate_limit: float = 0.5
-    rate_window: int = 1
+    rate_limit: float = 2.0
+    rate_window: int = 5
     redis_url: str = ""
     log_level: str = "INFO"
 
@@ -230,8 +230,8 @@ def load_settings() -> Settings:
     log_level = os.getenv("LOG_LEVEL", "INFO").strip().upper()
 
     # Rate limiting and Redis
-    rate_limit = _parse_float(os.getenv("RATE_LIMIT", "0.5"), 0.5)
-    rate_window = _parse_int(os.getenv("RATE_WINDOW", "1"), 1)
+    rate_limit = _parse_float(os.getenv("RATE_LIMIT", "2.0"), 2.0)
+    rate_window = _parse_int(os.getenv("RATE_WINDOW", "5"), 5)
     redis_url = os.getenv("REDIS_URL", "")
 
     settings = Settings(
