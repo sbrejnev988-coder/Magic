@@ -1,19 +1,8 @@
 # ruff.toml
 # Конфигурация Ruff — быстрого линтера и форматтера
 
-# Игнорируемые правила
-ignore = [
-    "E501",  # line too long
-    "F841",  # unused variable (может быть полезно в разработке)
-    "ANN101", # missing type annotation for self
-    "ANN102", # missing type annotation for cls
-]
-
 # Максимальная длина строки
 line-length = 120
-
-# Включить форматирование (аналог black)
-format = true
 
 # Сортировка импортов (аналог isort)
 target-version = "py312"
@@ -21,6 +10,14 @@ target-version = "py312"
 [lint]
 # Включить все правила по умолчанию
 select = ["E", "F", "I", "B", "C", "W", "UP", "PL", "RUF"]
+
+# Игнорируемые правила
+ignore = [
+    "E501",    # line too long
+    "F841",    # unused variable (может быть полезно в разработке)
+    "ANN101",  # missing type annotation for self
+    "ANN102",  # missing type annotation for cls
+]
 
 [format]
 # Настройки форматирования
