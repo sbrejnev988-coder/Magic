@@ -3,7 +3,7 @@ name = "mysticbot"
 version = "1.0.0"
 description = "Мистический Telegram бот с гаданиями и предсказаниями"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 authors = [
     { name = "MysticBot Team" }
 ]
@@ -12,10 +12,6 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
@@ -26,6 +22,17 @@ dependencies = [
     "asyncpg>=0.30",
     "redis>=5.0",
     "alembic>=1.13.0",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
+    "psutil>=5.9",
+    "pillow>=10.0",
+    "ephem>=4.1",
+    "python-dateutil>=2.8",
+    "pytz>=2024.1",
+    "telethon>=1.36",
+    "apscheduler>=3.10",
+    "aiosqlite>=0.20",
+    "psycopg2-binary>=2.9",
 ]
 
 [project.optional-dependencies]
@@ -52,17 +59,6 @@ packages = ["bot"]
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
-
-[tool.ruff]
-ignore = [
-    "E501",
-    "F841",
-    "ANN101",
-    "ANN102",
-]
-line-length = 120
-format = true
-target-version = "py312"
 
 [tool.mypy]
 python_version = "3.12"
