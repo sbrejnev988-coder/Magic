@@ -67,6 +67,16 @@ class FeaturesConfig:
     ai_mode_enabled: bool = True
     hybrid_mode_enabled: bool = True
     daily_ai_limit: int = 50
+    enable_tarot: bool = True
+    enable_numerology: bool = True
+    enable_horoscope: bool = True
+    enable_finance_calendar: bool = True
+    enable_dream: bool = True
+    enable_runes: bool = True
+    enable_random: bool = True
+    enable_ask: bool = True
+    enable_astrology: bool = True
+    enable_meditation: bool = True
 
 
 @dataclass
@@ -78,6 +88,9 @@ class Settings:
     perplexity: PerplexityConfig = field(default_factory=PerplexityConfig)
     openai: OpenAIConfig = field(default_factory=OpenAIConfig)
     features: FeaturesConfig = field(default_factory=FeaturesConfig)
+    rate_limit: float = 0.5
+    rate_window: int = 1
+    redis_url: str = ""
     log_level: str = "INFO"
 
     @property
@@ -186,9 +199,24 @@ def load_settings() -> Settings:
         ai_mode_enabled=_parse_bool(os.getenv("AI_MODE_ENABLED", "true"), True),
         hybrid_mode_enabled=_parse_bool(os.getenv("HYBRID_MODE_ENABLED", "true"), True),
         daily_ai_limit=int(os.getenv("DAILY_AI_LIMIT", "50")),
+        enable_tarot=_parse_bool(os.getenv("ENABLE_TAROT", "true"), True),
+        enable_numerology=_parse_bool(os.getenv("ENABLE_NUMEROLOGY", "true"), True),
+        enable_horoscope=_parse_bool(os.getenv("ENABLE_HOROSCOPE", "true"), True),
+        enable_finance_calendar=_parse_bool(os.getenv("ENABLE_FINANCE_CALENDAR", "true"), True),
+        enable_dream=_parse_bool(os.getenv("ENABLE_DREAM", "true"), True),
+        enable_runes=_parse_bool(os.getenv("ENABLE_RUNES", "true"), True),
+        enable_random=_parse_bool(os.getenv("ENABLE_RANDOM", "true"), True),
+        enable_ask=_parse_bool(os.getenv("ENABLE_ASK", "true"), True),
+        enable_astrology=_parse_bool(os.getenv("ENABLE_ASTROLOGY", "true"), True),
+        enable_meditation=_parse_bool(os.getenv("ENABLE_MEDITATION", "true"), True),
     )
 
     log_level = os.getenv("LOG_LEVEL", "INFO").strip().upper()
+
+    # Rate limiting and Redis
+    rate_limit = float(os.getenv("RATE_LIMIT", "0.5"))
+    rate_window = int(os.getenv("RATE_WINDOW", "1"))
+    redis_url = os.getenv("REDIS_URL", "")
 
     settings = Settings(
         telegram=telegram,
@@ -197,6 +225,9 @@ def load_settings() -> Settings:
         perplexity=perplexity,
         openai=openai_cfg,
         features=features,
+        rate_limit=rate_limit,
+        rate_window=rate_window,
+        redis_url=redis_url,
         log_level=log_level,
     )
 

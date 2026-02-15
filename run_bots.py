@@ -26,18 +26,27 @@ try:
 except ImportError:
     pass
 
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[
-        logging.FileHandler("logs/bots_launcher.log", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
+# Настройка логирования (будет выполнена после создания папки logs)
+logger = None  # будет инициализирован в setup_logging
 
-logger = logging.getLogger("bots_launcher")
+def setup_logging():
+    """Инициализация логирования после создания папки logs"""
+    global logger
+    # Убедимся, что папка logs существует
+    logs_dir = Path("logs")
+    if not logs_dir.exists():
+        logs_dir.mkdir(parents=True, exist_ok=True)
+    
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[
+            logging.FileHandler("logs/bots_launcher.log", encoding="utf-8"),
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+    logger = logging.getLogger("bots_launcher")
 
 # Пути к скриптам ботов
 MAIN_BOT_SCRIPT = "bot/main.py"
@@ -45,6 +54,7 @@ CONSULTANT_BOT_SCRIPT = "admin_bot.py"
 
 # Процессы ботов
 processes = []
+open_files = []
 
 # Graceful shutdown timeout (секунды)
 GRACEFUL_SHUTDOWN_TIMEOUT = 30
@@ -93,6 +103,13 @@ def stop_bots():
                 logger.error(f"Не удалось завершить процесс {proc.pid}")
     
     processes.clear()
+    # Закрыть все открытые лог-файлы
+    for f in open_files:
+        try:
+            f.close()
+        except Exception:
+            pass
+    open_files.clear()
     logger.info("Все боты остановлены.")
 
 
@@ -110,58 +127,65 @@ def check_requirements():
         logger.info("Убедитесь, что вы находитесь в корневой папке MysticBot.")
         return False
     
-    # Проверяем наличие папки logs
-    logs_dir = Path("logs")
-    if not logs_dir.exists():
-        logs_dir.mkdir(parents=True, exist_ok=True)
-        logger.info("Создана папка logs/ для хранения логов.")
+    # Папка logs будет создана в setup_logging
     
     return True
 
 
 def start_bot(script_name, bot_name):
     """Запуск одного бота"""
+    log_fd = None
     try:
         logger.info(f"Запускаю {bot_name} ({script_name})...")
         
         # Создаем отдельный лог-файл для этого бота
         log_file = f"logs/{bot_name.lower().replace(' ', '_')}.log"
         
-        # Открываем лог-файл для записи
-        with open(log_file, "a", encoding="utf-8") as log_fd:
-            # Запускаем процесс напрямую через файл (исправлено)
-            proc = subprocess.Popen(
-                [sys.executable, script_name],
-                stdout=log_fd,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                bufsize=1
-            )
-            
-            processes.append(proc)
-            logger.info(f"{bot_name} запущен (PID: {proc.pid}). Логи в {log_file}")
-            
-            # Дадим процессу немного времени на инициализацию
-            time.sleep(2)
-            
-            # Проверим, не завершился ли процесс с ошибкой
-            if proc.poll() is not None:
-                logger.error(f"{bot_name} завершился сразу после запуска. Проверьте логи.")
-                # Прочитаем последние строки лога для диагностики
-                try:
-                    with open(log_file, "r", encoding="utf-8") as f:
-                        lines = f.readlines()
-                        if lines:
-                            logger.error(f"Последние строки лога:\n{''.join(lines[-20:])}")
-                except:
-                    pass
-                return False
-            
-            return True
-            
+        # Открываем лог-файл для записи (без with, чтобы не закрывать раньше времени)
+        log_fd = open(log_file, "a", encoding="utf-8")
+        open_files.append(log_fd)
+        
+        # Запускаем процесс напрямую через файл (исправлено)
+        proc = subprocess.Popen(
+            [sys.executable, script_name],
+            stdout=log_fd,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            bufsize=1
+        )
+        
+        processes.append(proc)
+        logger.info(f"{bot_name} запущен (PID: {proc.pid}). Логи в {log_file}")
+        
+        # Дадим процессу немного времени на инициализацию
+        time.sleep(2)
+        
+        # Проверим, не завершился ли процесс с ошибкой
+        if proc.poll() is not None:
+            logger.error(f"{bot_name} завершился сразу после запуска. Проверьте логи.")
+            # Прочитаем последние строки лога для диагностики
+            try:
+                with open(log_file, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                    if lines:
+                        logger.error(f"Последние строки лога:\n{''.join(lines[-20:])}")
+            except:
+                pass
+            # Закрываем лог-файл, т.к. процесс завершился
+            if log_fd:
+                log_fd.close()
+                open_files.remove(log_fd)
+            return False
+        
+        return True
+        
     except Exception as e:
         logger.error(f"Ошибка при запуске {bot_name}: {e}")
+        if log_fd:
+            log_fd.close()
+            if log_fd in open_files:
+                open_files.remove(log_fd)
         return False
 
 
@@ -249,6 +273,8 @@ def main():
                        help="Остановить все запущенные боты")
     
     args = parser.parse_args()
+    
+    setup_logging()
     
     if args.stop:
         # Найдём и остановим все процессы Python, связанные с ботами

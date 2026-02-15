@@ -134,8 +134,8 @@ async def main():
 
     # --- Middleware ---
     dp.message.middleware(ThrottlingMiddleware(
-        rate_limit=getattr(settings, "rate_limit", 0.5),
-        window=getattr(settings, "rate_window", 1),
+        rate_limit=settings.rate_limit,
+        window=settings.rate_window,
     ))
     if session_maker:
         dp.message.middleware(AuthMiddleware(session_maker))
@@ -165,8 +165,8 @@ async def main():
     ]
 
     for feature_key, router, name in feature_routers:
-        enable_key = f"ENABLE_{feature_key.upper()}"
-        if getattr(settings, enable_key, True):
+        enable_key = f"enable_{feature_key}"
+        if getattr(settings.features, enable_key, True):
             dp.include_router(router)
             log.info(f"  ✅ {name}")
 
