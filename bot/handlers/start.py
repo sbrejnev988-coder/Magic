@@ -14,7 +14,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 router = Router()
 
 
-def build_main_keyboard():
+def build_main_keyboard() -> types.ReplyKeyboardMarkup:
     """Создает главную клавиатуру меню."""
     builder = ReplyKeyboardBuilder()
     builder.row(types.KeyboardButton(text="🃏 Карты Таро"))
@@ -33,7 +33,7 @@ def build_main_keyboard():
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message):
+async def cmd_start(message: Message) -> None:
     """Обработчик команды /start"""
     logging.info(f"Received /start from {message.from_user.id}")
     user = message.from_user
@@ -60,7 +60,7 @@ async def cmd_start(message: Message):
 
 
 @router.message(Command("help"))
-async def cmd_help(message: Message):
+async def cmd_help(message: Message) -> None:
     """Обработчик команды /help — показывает краткую инструкцию и меню"""
     help_text = """
 📖 *Помощь по MysticBot*
@@ -96,7 +96,7 @@ async def cmd_help(message: Message):
 
 
 @router.message(Command("premium"))
-async def cmd_premium(message: Message):
+async def cmd_premium(message: Message) -> None:
     """Информация о премиум-подписке"""
     premium_text = """
 🌟 Премиум-подписка MysticBot
@@ -117,7 +117,7 @@ async def cmd_premium(message: Message):
 
 
 @router.message(Command("price"))
-async def cmd_price(message: Message):
+async def cmd_price(message: Message) -> None:
     """Информация о персональной консультации"""
     logging.info(f"Received /price from {message.from_user.id}")
     price_text = """
@@ -150,7 +150,7 @@ async def cmd_price(message: Message):
 
 
 @router.message(F.text.contains("💎 Консультация (777 ₽)"))
-async def handle_price_button(message: Message):
+async def handle_price_button(message: Message) -> None:
     """Обработчик кнопки консультации"""
     await cmd_price(message)
 
