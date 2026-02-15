@@ -6,7 +6,7 @@
 import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Tuple
-from sqlalchemy import select, func, and_, or_, desc, distinct
+from sqlalchemy import select, func, and_, or_, desc, distinct, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 
@@ -286,4 +286,5 @@ async def search_users_by_criteria(session: AsyncSession, **kwargs) -> Tuple[Lis
 async def get_user_full_profile(session: AsyncSession, user_id: int) -> Dict[str, Any]:
     """Получение полного профиля пользователя"""
     service = UserSearchService(session)
+
     return await service.get_user_detailed_stats(user_id)
