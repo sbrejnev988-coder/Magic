@@ -42,16 +42,13 @@ from bot.services.llm import get_llm_service
 
 def setup_logging(level: str):
     """Настройка логирования."""
-    Path("logs").mkdir(exist_ok=True)
-    logging.basicConfig(
-        level=getattr(logging, level.upper(), logging.INFO),
-        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=[
-            logging.FileHandler("logs/bot.log", encoding="utf-8"),
-            logging.StreamHandler(),
-        ],
-    )
+    from bot.logging_config import setup_logging as setup_logging_new
+    import os
+    import logging
+    log_json = os.getenv("LOG_JSON", "false").strip().lower() == "true"
+    log_file = os.getenv("LOG_FILE", "logs/bot.log")
+    setup_logging_new(log_level=level, log_json=log_json, log_file=log_file)
+    # Установить уровни для шумных библиотек
     logging.getLogger("aiogram").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
