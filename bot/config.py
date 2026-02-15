@@ -16,6 +16,22 @@ load_dotenv(dotenv_path=env_path)
 logger = logging.getLogger(__name__)
 
 
+def _parse_int(value: str, default: int) -> int:
+    """Парсит строку в целое число, возвращает default при ошибке."""
+    try:
+        return int(value.strip())
+    except (ValueError, AttributeError):
+        return default
+
+
+def _parse_float(value: str, default: float) -> float:
+    """Парсит строку в число с плавающей точкой, возвращает default при ошибке."""
+    try:
+        return float(value.strip())
+    except (ValueError, AttributeError):
+        return default
+
+
 @dataclass(frozen=True)
 class TelegramConfig:
     """Конфигурация Telegram Bot."""
@@ -149,16 +165,8 @@ def load_settings() -> Settings:
         os.getenv("FEATHERLESS_ENDPOINT", "https://api.featherless.ai/v1")
     ).strip().rstrip("/")
     fl_model = os.getenv("FEATHERLESS_MODEL", "zai-org/GLM-4.7-Flash").strip()
-    fl_timeout = try:
-        int(os.getenv("FEATHERLESS_TIMEOUT", "180"))
-    except ValueError:
-        # default value? need to decide
-        pass
-    fl_retries = try:
-        int(os.getenv("FEATHERLESS_MAX_RETRIES", "3"))
-    except ValueError:
-        # default value? need to decide
-        pass
+    fl_timeout = _parse_int(os.getenv("FEATHERLESS_TIMEOUT", "180"), 180)
+    fl_retries = _parse_int(os.getenv("FEATHERLESS_MAX_RETRIES", "3"), 3)
 
     # Валидация base_url
     if fl_key and not fl_base.endswith("/v1"):
@@ -206,11 +214,7 @@ def load_settings() -> Settings:
     features = FeaturesConfig(
         ai_mode_enabled=_parse_bool(os.getenv("AI_MODE_ENABLED", "true"), True),
         hybrid_mode_enabled=_parse_bool(os.getenv("HYBRID_MODE_ENABLED", "true"), True),
-        daily_ai_limit=try:
-            int(os.getenv("DAILY_AI_LIMIT", "50"))
-        except ValueError:
-            # default value? need to decide
-            pass,
+        daily_ai_limit=_parse_int(os.getenv("DAILY_AI_LIMIT", "50"), 50),
         enable_tarot=_parse_bool(os.getenv("ENABLE_TAROT", "true"), True),
         enable_numerology=_parse_bool(os.getenv("ENABLE_NUMEROLOGY", "true"), True),
         enable_horoscope=_parse_bool(os.getenv("ENABLE_HOROSCOPE", "true"), True),
@@ -226,16 +230,8 @@ def load_settings() -> Settings:
     log_level = os.getenv("LOG_LEVEL", "INFO").strip().upper()
 
     # Rate limiting and Redis
-    rate_limit = try:
-        float(os.getenv("RATE_LIMIT", "0.5"))
-    except ValueError:
-        # default value? need to decide
-        pass
-    rate_window = try:
-        int(os.getenv("RATE_WINDOW", "1"))
-    except ValueError:
-        # default value? need to decide
-        pass
+    rate_limit = _parse_float(os.getenv("RATE_LIMIT", "0.5"), 0.5)
+    rate_window = _parse_int(os.getenv("RATE_WINDOW", "1"), 1)
     redis_url = os.getenv("REDIS_URL", "")
 
     settings = Settings(
