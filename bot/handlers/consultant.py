@@ -21,25 +21,24 @@ from bot.services.prediction_history_service import PredictionHistoryService
 from bot.database.engine import create_engine, get_session_maker
 from bot.models.consultation import Consultation
 from bot.models.user_settings import UserSettings
-from bot.config import Settings
+from bot.config import settings
 
 log = logging.getLogger(__name__)
 
 router = Router()
-settings = Settings()
 
 # Создаем engine и session_maker для работы с БД
-engine = create_engine(settings.DATABASE_URL)
+engine = create_engine(settings.database.url)
 session_maker = get_session_maker(engine)
 
-log.info(f"Consultant module loaded. ADMIN_USER_ID={settings.ADMIN_USER_ID}")
+log.info(f"Consultant module loaded. ADMIN_USER_ID={settings.telegram.admin_user_id}")
 
 
 def is_consultant(user_id: int) -> bool:
     """Проверка прав консультанта"""
     # Приводим оба значения к int для надёжности
     user_id_int = int(user_id)
-    admin_id_int = int(settings.ADMIN_USER_ID)
+    admin_id_int = int(settings.telegram.admin_user_id)
     
     result = user_id_int == admin_id_int
     log.info(f"CONSULTANT: Проверка прав: user_id={user_id_int}, ADMIN_USER_ID={admin_id_int}, результат={result}")
@@ -304,7 +303,7 @@ async def _stats_logic(user_id: int, chat_id: int, reply_to_message_id: int = No
 async def cmd_consultations(message: Message, command: CommandObject):
     """Просмотр консультаций (последние 10 или по пользователю)"""
     log.debug(f"cmd_consultations called by user_id={message.from_user.id}, args={command.args}")
-    log.debug(f"Settings ADMIN_USER_ID={settings.ADMIN_USER_ID}")
+    log.debug(f"Settings ADMIN_USER_ID={settings.telegram.admin_user_id}")
     
     success, result = await _consultations_logic(
         user_id=message.from_user.id,
@@ -970,7 +969,7 @@ async def handle_consultant_mark_paid(callback: CallbackQuery):
 
 
 # Обработчики сообщений для состояний FSM
-@router.message(F.text & F.from_user.id == settings.ADMIN_USER_ID)
+@router.message(F.text & F.from_user.id == settings.telegram.admin_user_id)
 async def handle_consultant_text(message: Message, state: FSMContext):
     """Обработчик текстовых сообщений от консультанта (для редактирования/отклонения черновиков)"""
     data = await state.get_data()
