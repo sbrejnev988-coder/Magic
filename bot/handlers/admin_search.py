@@ -14,15 +14,15 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.services.user_search_service import UserSearchService, search_users_by_criteria, get_user_full_profile
 from bot.database.engine import create_engine, get_session_maker
-from bot.config import Settings
+from bot.config import settings
 from bot.handlers.consultant import is_consultant
 
 router = Router()
 log = logging.getLogger(__name__)
 
 # Создаем engine и session_maker для работы с БД
-settings = Settings()
-engine = create_engine(settings.DATABASE_URL)
+
+engine = create_engine(settings.database.url)
 session_maker = get_session_maker(engine)
 
 
