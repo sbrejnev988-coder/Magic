@@ -4,10 +4,10 @@
 
 from datetime import datetime
 from enum import Enum as PyEnum
-from typing import Optional
+from typing import Any, Optional
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Enum, JSON
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Enum, Integer, JSON, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
 
@@ -29,24 +29,24 @@ class PredictionType(PyEnum):
 class PredictionHistory(Base):
     """История предсказаний пользователя"""
     __tablename__ = "prediction_history"
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, nullable=False, index=True)  # ID пользователя Telegram
-    prediction_type = Column(Enum(PredictionType), nullable=False)  # Тип предсказания
-    subtype = Column(String(100), nullable=True)  # Подтип (например, "daily", "weekly", "one_card", "three_cards")
-    details = Column(JSON, nullable=True)  # Детали предсказания в формате JSON
-    result_text = Column(Text, nullable=False)  # Текст результата предсказания
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # Дата создания
-    
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)  # ID пользователя Telegram
+    prediction_type: Mapped[PredictionType] = mapped_column(Enum(PredictionType), nullable=False)  # Тип предсказания
+    subtype: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # Подтип
+    details: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)  # Детали предсказания в формате JSON
+    result_text: Mapped[str] = mapped_column(Text, nullable=False)  # Текст результата предсказания
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)  # Дата создания
+
     # Дополнительные поля для контекста
-    user_message = Column(Text, nullable=True)  # Сообщение пользователя (если было)
-    username = Column(String(100), nullable=True)  # Username пользователя для удобства
-    first_name = Column(String(100), nullable=True)  # Имя пользователя для удобства
-    
-    def __repr__(self):
+    user_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Сообщение пользователя (если было)
+    username: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # Username пользователя
+    first_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # Имя пользователя
+
+    def __repr__(self) -> str:
         return f"<PredictionHistory(id={self.id}, user_id={self.user_id}, type={self.prediction_type.value})>"
-    
-    def to_dict(self):
+
+    def to_dict(self) -> dict[str, object]:
         """Преобразование в словарь для сериализации"""
         return {
             "id": self.id,
