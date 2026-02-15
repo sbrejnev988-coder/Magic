@@ -61,5 +61,19 @@ class UserSettings(Base):
         """Установить список избранных модулей."""
         self.favorite_modules = ",".join(modules)
 
+    def add_favorite_module(self, module_name: str) -> None:
+        """Добавить модуль в избранное."""
+        modules = self.get_favorite_modules_list()
+        if module_name not in modules:
+            modules.append(module_name)
+            self.set_favorite_modules_list(modules)
+
+    def remove_favorite_module(self, module_name: str) -> None:
+        """Удалить модуль из избранного."""
+        modules = self.get_favorite_modules_list()
+        if module_name in modules:
+            modules.remove(module_name)
+            self.set_favorite_modules_list(modules)
+
     def __repr__(self) -> str:
         return f"<UserSettings(user_id={self.user_id}, ai_mode={self.ai_mode})>"
