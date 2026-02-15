@@ -27,5 +27,6 @@ class Consultation(Base):
         lazy="select"
     )
     
-    def __repr__(self):
+        def __repr__(self) -> str:
+
         return f"<Consultation(user_id={self.user_id}, question={self.question[:50]}...)>"
