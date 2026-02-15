@@ -200,5 +200,4 @@ class ClientFilesService:
             file_type=file_type
         )
         
-
         return file_record
