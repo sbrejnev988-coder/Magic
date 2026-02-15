@@ -3,7 +3,7 @@ name = "mysticbot"
 version = "1.0.0"
 description = "Мистический Telegram бот с гаданиями и предсказаниями"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     { name = "MysticBot Team" }
 ]
