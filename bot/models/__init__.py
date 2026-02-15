@@ -7,7 +7,7 @@ from .order import Order, OrderStatus
 from .hybrid_draft import HybridDraft, DraftStatus
 from .prediction_history import PredictionHistory, PredictionType
 
-__all__ = [
+__all__: list[str] = [
     "Base", 
     "Consultation", 
     "ConsultationFile", 
@@ -18,4 +18,5 @@ __all__ = [
     "DraftStatus",
     "PredictionHistory",
     "PredictionType"
+
 ]
