@@ -7,6 +7,9 @@ line-length = 120
 # Сортировка импортов (аналог isort)
 target-version = "py312"
 
+# Ширина отступа
+indent-width = 4
+
 [lint]
 # Включить все правила по умолчанию
 select = ["E", "F", "I", "B", "C", "W", "UP", "PL", "RUF"]
@@ -23,4 +26,3 @@ ignore = [
 # Настройки форматирования
 quote-style = "double"
 indent-style = "space"
-indent-width = 4
