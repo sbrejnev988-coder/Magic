@@ -217,7 +217,7 @@ async def handle_runes_button(message: Message, state: FSMContext):
 @router.message(F.text.contains("🎲 Случайное предсказание"))
 async def handle_random_button(message: Message, state: FSMContext):
     """Обработчик кнопки случайного предсказания"""
-    from bot.handlers.random import cmd_random
+    from bot.handlers.randomizer import cmd_random
     await cmd_random(message)
 
 
