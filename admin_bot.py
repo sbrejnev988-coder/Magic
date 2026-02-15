@@ -10,7 +10,7 @@ from pathlib import Path
 from aiogram import Bot, Dispatcher, types
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 
-from bot.config import Settings
+from bot.config import settings
 from bot.database.engine import create_engine, get_session_maker
 from bot.models.base import Base
 import bot.models  # регистрация всех моделей в Base.metadata
@@ -68,18 +68,17 @@ async def main():
     log.info("=" * 60)
     
     # Загружаем конфигурацию
-    settings = Settings()
-    
+
     if not settings.ADMIN_BOT_TOKEN:
         log.critical("ADMIN_BOT_TOKEN не задан в .env файле!")
         return
     
     # ✅ ИСПРАВЛЕНО: убрано логирование токена
     log.info("✅ Токен админ-бота настроен")
-    log.info(f"ID администратора: {settings.ADMIN_USER_ID}")
+    log.info(f"ID администратора: {settings.telegram.admin_user_id}")
     
     # Подключаем базу данных
-    engine = create_engine(settings.DATABASE_URL)
+    engine = create_engine(settings.database.url)
     session_maker = get_session_maker(engine)
     
     # Создаём таблицы, если их нет
