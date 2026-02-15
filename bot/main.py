@@ -94,20 +94,24 @@ async def main():
 
     # --- FSM Storage (Redis → Memory fallback) ---
     fsm_storage = None
-    try:
-        from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
-        redis_url = getattr(settings, "redis_url", None) or "redis://localhost:6379/0"
-        fsm_storage = RedisStorage.from_url(
-            redis_url,
-            key_builder=DefaultKeyBuilder(prefix="fsm", with_bot_id=True),
-        )
-        log.info("✅ Redis FSM storage подключен")
-    except Exception as e:
-        log.warning(
-            f"⚠️ Redis недоступен: {e}. "
-            f"Использую MemoryStorage (FSM-данные потеряются при рестарте!)"
-        )
+    redis_url = getattr(settings, "redis_url", None)
+    if not redis_url:
+        log.info("✅ Redis URL не задан, использую MemoryStorage")
         fsm_storage = MemoryStorage()
+    else:
+        try:
+            from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
+            fsm_storage = RedisStorage.from_url(
+                redis_url,
+                key_builder=DefaultKeyBuilder(prefix="fsm", with_bot_id=True),
+            )
+            log.info("✅ Redis FSM storage подключен")
+        except Exception as e:
+            log.warning(
+                f"⚠️ Redis недоступен: {e}. "
+                f"Использую MemoryStorage (FSM-данные потеряются при рестарте!)"
+            )
+            fsm_storage = MemoryStorage()
 
     # --- Бот и диспетчер ---
     bot = Bot(token=settings.telegram.bot_token)
