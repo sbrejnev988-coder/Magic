@@ -27,7 +27,7 @@ from bot.handlers.profile import router as profile_router
 from bot.handlers.admin import router as admin_router
 from bot.handlers.dream import router as dream_router
 from bot.handlers.runes import router as runes_router
-from bot.handlers.random import router as random_router
+from bot.handlers.randomizer import router as random_router
 from bot.handlers.ask import router as ask_router
 from bot.handlers.astrology import router as astrology_router
 from bot.handlers.meditation import router as meditation_router
