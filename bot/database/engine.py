@@ -1,79 +1,76 @@
 """
-Р”РІРёР¶РѕРє Р±Р°Р·С‹ РґР°РЅРЅС‹С… SQLAlchemy СЃ connection pooling
+Движок базы данных SQLAlchemy с connection pooling.
 """
-
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.pool import QueuePool
+import logging
 from typing import AsyncGenerator
 
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
+    async_sessionmaker,
+    AsyncEngine,
+)
+from sqlalchemy.pool import QueuePool, NullPool
 
-def create_engine(database_url: str, echo: bool = False):
+logger = logging.getLogger(__name__)
+
+
+def create_engine(database_url: str, echo: bool = False) -> AsyncEngine:
     """
-    РЎРѕР·РґР°РЅРёРµ async engine СЃ РЅР°СЃС‚СЂРѕРµРЅРЅС‹Рј connection pooling
-    
-    Args:
-        database_url: URL Р±Р°Р·С‹ РґР°РЅРЅС‹С…
-        echo: Р’С‹РІРѕРґ SQL Р·Р°РїСЂРѕСЃРѕРІ РІ Р»РѕРі
+    Создание async engine с настроенным connection pooling.
+
+    - SQLite: NullPool (потокобезопасность)
+    - PostgreSQL: QueuePool с разумными лимитами
     """
-    # РќР°СЃС‚СЂРѕР№РєРё connection pooling
-    pool_settings = {
-        "poolclass": QueuePool,
-        "pool_size": 10,              # РњРёРЅРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРѕРµРґРёРЅРµРЅРёР№
-        "max_overflow": 20,            # РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… СЃРѕРµРґРёРЅРµРЅРёР№
-        "pool_timeout": 30,            # РўР°Р№РјР°СѓС‚ РѕР¶РёРґР°РЅРёСЏ СЃРІРѕР±РѕРґРЅРѕРіРѕ СЃРѕРµРґРёРЅРµРЅРёСЏ (СЃРµРєСѓРЅРґС‹)
-        "pool_recycle": 3600,          # РџРµСЂРµРёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ СЃРѕРµРґРёРЅРµРЅРёР№ РєР°Р¶РґС‹Р№ С‡Р°СЃ
-        "pool_pre_ping": True,          # РџСЂРѕРІРµСЂРєР° СЃРѕРµРґРёРЅРµРЅРёСЏ РїРµСЂРµРґ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј
-    }
-    
-    # Р”Р»СЏ SQLite РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј pooling
     if "sqlite" in database_url:
+        logger.info(f"🗄️ SQLite engine: {database_url}")
         return create_async_engine(
             database_url,
             echo=echo,
-            connect_args={"check_same_thread": False}
+            poolclass=NullPool,  # SQLite не поддерживает QueuePool
+            connect_args={"check_same_thread": False},
         )
-    
-    # Р”Р»СЏ PostgreSQL РёСЃРїРѕР»СЊР·СѓРµРј РїРѕР»РЅРѕС†РµРЅРЅС‹Р№ pooling
+
+    # PostgreSQL / другие СУБД
+    logger.info(f"🐘 PostgreSQL engine: pool_size=5, max_overflow=10")
     return create_async_engine(
         database_url,
         echo=echo,
-        **pool_settings
+        poolclass=QueuePool,
+        pool_size=5,           # 5 постоянных соединений (было 10)
+        max_overflow=10,       # +10 пиковых (было 20)
+        pool_timeout=30,
+        pool_recycle=3600,     # Пересоздание каждый час
+        pool_pre_ping=True,    # Проверка перед использованием
     )
 
 
-def get_session_maker(engine) -> async_sessionmaker:
-    """
-    РЎРѕР·РґР°РЅРёРµ session maker РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ Р‘Р”
-    
-    Args:
-        engine: SQLAlchemy async engine
-    
-    Returns:
-        async_sessionmaker: Р¤Р°Р±СЂРёРєР° СЃРµСЃСЃРёР№
-    """
+def get_session_maker(engine: AsyncEngine) -> async_sessionmaker:
+    """Фабрика сессий."""
     return async_sessionmaker(
         engine,
         class_=AsyncSession,
         expire_on_commit=False,
         autocommit=False,
-        autoflush=False
+        autoflush=False,
     )
 
 
-async def get_session(session_maker: async_sessionmaker) -> AsyncGenerator[AsyncSession, None]:
+async def get_session(
+    session_maker: async_sessionmaker,
+) -> AsyncGenerator[AsyncSession, None]:
     """
-    Context manager РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ СЃРµСЃСЃРёРё Р‘Р”
-    
-    Usage:
-        async with get_session(session_maker) as session:
-            # work with session
+    Context manager для получения сессии БД.
+
+    ВАЖНО: Не коммитит автоматически!
+    Handler должен вызвать session.commit() явно после записи.
     """
     async with session_maker() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
+            logger.error("❌ Сессия откачена (rollback)")
             raise
         finally:
             await session.close()
