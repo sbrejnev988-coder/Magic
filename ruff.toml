@@ -11,15 +11,19 @@ target-version = "py312"
 indent-width = 4
 
 [lint]
-# Включить все правила по умолчанию
+# Включить правила
 select = ["E", "F", "I", "B", "C", "W", "UP", "PL", "RUF"]
 
 # Игнорируемые правила
 ignore = [
-    "E501",    # line too long
-    "F841",    # unused variable (может быть полезно в разработке)
-    "ANN101",  # missing type annotation for self
-    "ANN102",  # missing type annotation for cls
+    "E501",     # line too long
+    "F841",     # unused variable
+    "RUF001",   # ambiguous unicode (кириллица в строках)
+    "RUF002",   # ambiguous unicode in docstrings
+    "RUF003",   # ambiguous unicode in comments
+    "W291",     # trailing whitespace
+    "W292",     # no newline at end of file
+    "W293",     # blank line contains whitespace
 ]
 
 [format]
