@@ -15,7 +15,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.services.prediction_history_service import PredictionHistoryService
 from bot.models.prediction_history import PredictionType
-from bot.database.engine import get_session_maker
+from bot.database.engine import get_session_maker, create_engine
+from bot.config import settings
 
 router = Router()
 log = logging.getLogger(__name__)
@@ -186,7 +187,8 @@ async def process_question(message: Message, state: FSMContext):
     
     # Сохраняем в историю предсказаний
     try:
-        async with get_session_maker()() as session:
+        engine = create_engine(settings.database.url)
+        async with get_session_maker(engine)() as session:
             await PredictionHistoryService.create_prediction(
                 session=session,
                 user_id=message.from_user.id,
@@ -228,8 +230,4 @@ async def handle_new_reading(callback: CallbackQuery, state: FSMContext):
     await cmd_tarot(callback.message, state)
 
 
-# Обработчик текстовой кнопки "Карты Таро" (для совместимости)
-@router.message(lambda m: m.text and "таро" in m.text.lower())
-async def handle_tarot_text(message: Message, state: FSMContext):
-    """Обработка текстового упоминания Таро"""
-    await cmd_tarot(message, state)
+# Удалён дублирующий обработчик (вызывает двойные сообщения)
