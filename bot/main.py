@@ -56,6 +56,7 @@ def setup_logging(level: str):
 
 async def main():
     """Основная функция запуска."""
+    import os
     setup_logging(settings.log_level)
     log = logging.getLogger("main")
 
@@ -108,6 +109,17 @@ async def main():
     # --- Бот и диспетчер ---
     bot = Bot(token=settings.telegram.bot_token)
     dp = Dispatcher(storage=fsm_storage)
+
+    # --- Healthcheck сервер (если включён) ---
+    health_runner = None
+    health_enabled = os.getenv("HEALTH_ENABLED", "true").strip().lower() == "true"
+    if health_enabled:
+        try:
+            from bot.health_server import start_health_server
+            health_runner = await start_health_server()
+            log.info("✅ Healthcheck сервер запущен")
+        except Exception as e:
+            log.warning(f"⚠️ Не удалось запустить healthcheck сервер: {e}")
 
     # --- Shutdown hooks (корректное завершение) ---
     async def on_shutdown():
