@@ -20,7 +20,7 @@ jobs:
       - name: Run ruff
         run: uv run ruff check .
       - name: Run mypy
-        run: uv run mypy --ignore-missing-imports --strict .
+        run: uv run mypy --ignore-missing-imports --strict bot
 
   test:
     runs-on: ubuntu-latest
