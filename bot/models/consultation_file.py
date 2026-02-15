@@ -29,6 +29,5 @@ class ConsultationFile(Base):
     # Связь с консультацией
     consultation: Mapped["Consultation"] = relationship("Consultation", back_populates="files")
     
-        def __repr__(self) -> str:
-
+    def __repr__(self) -> str:
         return f"<ConsultationFile(user_id={self.user_id}, file_name={self.file_name})>"
