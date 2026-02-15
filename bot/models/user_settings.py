@@ -61,5 +61,5 @@ class UserSettings(Base):
         """Установить список избранных модулей."""
         self.favorite_modules = ",".join(modules)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<UserSettings(user_id={self.user_id}, ai_mode={self.ai_mode})>"
