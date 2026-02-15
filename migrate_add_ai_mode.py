@@ -10,7 +10,7 @@ from pathlib import Path
 # Добавляем корень проекта в PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
 
-from bot.config import Settings
+from bot.config import settings
 from bot.database.engine import create_engine, get_session_maker
 from sqlalchemy import text
 
@@ -19,8 +19,8 @@ log = logging.getLogger(__name__)
 
 
 async def migrate():
-    settings = Settings()
-    engine = create_engine(settings.DATABASE_URL)
+
+    engine = create_engine(settings.database.url)
     session_maker = get_session_maker(engine)
     
     async with engine.begin() as conn:
