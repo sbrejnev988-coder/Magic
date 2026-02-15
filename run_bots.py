@@ -18,18 +18,19 @@ import signal
 import time
 from pathlib import Path
 import logging
+from typing import List, Tuple, Optional, TextIO
 
 # Загрузка переменных окружения из .env
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    pass
+    print("Warning: python-dotenv not installed. Install it: pip install python-dotenv")
 
 # Настройка логирования (будет выполнена после создания папки logs)
-logger = None  # будет инициализирован в setup_logging
+logger: Optional[logging.Logger] = None  # будет инициализирован в setup_logging
 
-def setup_logging():
+def setup_logging() -> None:
     """Инициализация логирования после создания папки logs"""
     global logger
     # Убедимся, что папка logs существует
@@ -53,29 +54,36 @@ MAIN_BOT_SCRIPT = "bot/main.py"
 CONSULTANT_BOT_SCRIPT = "admin_bot.py"
 
 # Процессы ботов
-processes = []
-open_files = []
+processes: List[subprocess.Popen] = []
+open_files: List[TextIO] = []
 
 # Graceful shutdown timeout (секунды)
 GRACEFUL_SHUTDOWN_TIMEOUT = 30
 
 
-def signal_handler(signum, frame):
+def signal_handler(signum: int, frame) -> None:
     """Обработчик сигналов для корректного завершения"""
-    logger.info(f"Получен сигнал {signum}. Останавливаю ботов...")
+    if logger:
+        logger.info(f"Получен сигнал {signum}. Останавливаю ботов...")
     stop_bots()
     sys.exit(0)
 
 
-def stop_bots():
+def stop_bots() -> None:
     """Остановка всех запущенных ботов с graceful shutdown"""
+    if not logger:
+        return
+        
     logger.info("Остановка ботов...")
     
     # Сначала отправляем SIGTERM для graceful shutdown
     for proc in processes:
         if proc and proc.poll() is None:
-            logger.info(f"Отправляю SIGTERM процессу {proc.pid}...")
-            proc.terminate()
+            try:
+                logger.info(f"Отправляю SIGTERM процессу {proc.pid}...")
+                proc.terminate()
+            except (ProcessLookupError, OSError) as e:
+                logger.warning(f"Ошибка при отправке SIGTERM процессу {proc.pid}: {e}")
     
     # Ждём graceful shutdown
     start_time = time.time()
@@ -96,25 +104,34 @@ def stop_bots():
     for proc in processes:
         if proc and proc.poll() is None:
             logger.warning(f"Процесс {proc.pid} не остановился за {GRACEFUL_SHUTDOWN_TIMEOUT}с, принудительное завершение...")
-            proc.kill()
             try:
+                proc.kill()
                 proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 logger.error(f"Не удалось завершить процесс {proc.pid}")
+            except (ProcessLookupError, OSError) as e:
+                logger.warning(f"Процесс {proc.pid} уже завершен: {e}")
     
     processes.clear()
+    
     # Закрыть все открытые лог-файлы
     for f in open_files:
         try:
-            f.close()
-        except Exception:
-            pass
+            if not f.closed:
+                f.close()
+        except Exception as e:
+            if logger:
+                logger.warning(f"Ошибка при закрытии файла: {e}")
     open_files.clear()
+    
     logger.info("Все боты остановлены.")
 
 
-def check_requirements():
+def check_requirements() -> bool:
     """Проверка наличия необходимых файлов"""
+    if not logger:
+        return False
+        
     required_files = [MAIN_BOT_SCRIPT, CONSULTANT_BOT_SCRIPT, ".env"]
     missing_files = []
     
@@ -127,25 +144,26 @@ def check_requirements():
         logger.info("Убедитесь, что вы находитесь в корневой папке MysticBot.")
         return False
     
-    # Папка logs будет создана в setup_logging
-    
     return True
 
 
-def start_bot(script_name, bot_name):
+def start_bot(script_name: str, bot_name: str) -> bool:
     """Запуск одного бота"""
-    log_fd = None
+    if not logger:
+        return False
+        
+    log_fd: Optional[TextIO] = None
     try:
         logger.info(f"Запускаю {bot_name} ({script_name})...")
         
         # Создаем отдельный лог-файл для этого бота
         log_file = f"logs/{bot_name.lower().replace(' ', '_')}.log"
         
-        # Открываем лог-файл для записи (без with, чтобы не закрывать раньше времени)
+        # Открываем лог-файл для записи
         log_fd = open(log_file, "a", encoding="utf-8")
         open_files.append(log_fd)
         
-        # Запускаем процесс напрямую через файл (исправлено)
+        # Запускаем процесс
         proc = subprocess.Popen(
             [sys.executable, script_name],
             stdout=log_fd,
@@ -169,11 +187,13 @@ def start_bot(script_name, bot_name):
                 with open(log_file, "r", encoding="utf-8") as f:
                     lines = f.readlines()
                     if lines:
-                        logger.error(f"Последние строки лога:\n{''.join(lines[-20:])}")
-            except:
-                pass
+                        last_lines = ''.join(lines[-20:])
+                        logger.error(f"Последние строки лога:\n{last_lines}")
+            except Exception as e:
+                logger.error(f"Не удалось прочитать лог-файл: {e}")
+            
             # Закрываем лог-файл, т.к. процесс завершился
-            if log_fd:
+            if log_fd and not log_fd.closed:
                 log_fd.close()
                 open_files.remove(log_fd)
             return False
@@ -182,15 +202,18 @@ def start_bot(script_name, bot_name):
         
     except Exception as e:
         logger.error(f"Ошибка при запуске {bot_name}: {e}")
-        if log_fd:
+        if log_fd and not log_fd.closed:
             log_fd.close()
             if log_fd in open_files:
                 open_files.remove(log_fd)
         return False
 
 
-def start_all_bots(daemon_mode=False):
+def start_all_bots(daemon_mode: bool = False) -> bool:
     """Запуск всех ботов"""
+    if not logger:
+        return False
+        
     if not check_requirements():
         return False
     
@@ -203,7 +226,7 @@ def start_all_bots(daemon_mode=False):
     signal.signal(signal.SIGTERM, signal_handler)
     
     # Запускаем ботов
-    bots_to_start = [
+    bots_to_start: List[Tuple[str, str]] = [
         (MAIN_BOT_SCRIPT, "Основной бот"),
         (CONSULTANT_BOT_SCRIPT, "Бот-консультант")
     ]
@@ -262,7 +285,7 @@ def start_all_bots(daemon_mode=False):
     return True
 
 
-def main():
+def main() -> None:
     """Основная функция"""
     import argparse
     
@@ -281,9 +304,13 @@ def main():
         try:
             import psutil
         except ImportError:
-            logger.error("Модуль psutil не установлен. Установите: pip install psutil")
+            if logger:
+                logger.error("Модуль psutil не установлен. Установите: pip install psutil")
             return
         
+        if not logger:
+            return
+            
         current_pid = os.getpid()
         
         logger.info("Поиск процессов ботов...")
@@ -304,7 +331,10 @@ def main():
             logger.info(f"Найдено {len(bot_processes)} процессов ботов:")
             for proc in bot_processes:
                 logger.info(f"  PID {proc.info['pid']}: {' '.join(proc.info['cmdline'][:3])}...")
-                proc.terminate()
+                try:
+                    proc.terminate()
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    logger.warning(f"Не удалось остановить процесс {proc.info['pid']}: {e}")
             
             # Дадим процессам время на graceful shutdown
             logger.info(f"Ожидание graceful shutdown ({GRACEFUL_SHUTDOWN_TIMEOUT}с)...")
@@ -316,8 +346,8 @@ def main():
                     if proc.is_running():
                         proc.kill()
                         logger.info(f"Принудительно завершён PID {proc.info['pid']}")
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    logger.debug(f"Процесс уже завершен: {e}")
             
             logger.info("Все процессы ботов остановлены.")
         else:
