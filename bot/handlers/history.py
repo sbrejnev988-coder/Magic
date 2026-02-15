@@ -1,7 +1,6 @@
 """
 Обработчики истории консультаций с пагинацией и экспортом
 """
-
 import logging
 import tempfile
 import os
@@ -28,28 +27,28 @@ async def build_history_message(
 ) -> str:
     """Построить текст сообщения с историей консультаций."""
     if not consultations:
-        return "📭 *История пуста*\nУ вас ещё нет сохранённых консультаций с AI."
-    
+        return "\U0001f4ed *История пуста*\nУ вас ещё нет сохранённых консультаций с AI."
+
     start_idx = (page - 1) * CONSULTATIONS_PER_PAGE + 1
-    history_text = f"📚 *История консультаций (стр. {page}/{total_pages})*\n\n"
-    
+    history_text = f"\U0001f4da *История консультаций (стр. {page}/{total_pages})*\n\n"
+
     for idx, consult in enumerate(consultations, start_idx):
         date_str = consult.created_at.strftime("%d.%m.%Y %H:%M")
         question_preview = consult.question[:50] + "..." if len(consult.question) > 50 else consult.question
         answer_preview = consult.answer[:80] + "..." if len(consult.answer) > 80 else consult.answer
-        
+
         history_text += (
             f"*{idx}. {date_str}*\n"
-            f"❓ *Вопрос:* {question_preview}\n"
-            f"💭 *Ответ:* {answer_preview}\n"
-            f"➖➖➖➖➖➖➖\n"
+            f"\u2753 *Вопрос:* {question_preview}\n"
+            f"\U0001f4ad *Ответ:* {answer_preview}\n"
+            f"\u2796\u2796\u2796\u2796\u2796\u2796\u2796\n"
         )
-    
+
     history_text += (
-        f"\n📊 *Всего консультаций:* {total_count}\n"
-        f"🗑️ _Вы можете удалить любую запись кнопкой ниже._"
+        f"\n\U0001f4ca *Всего консультаций:* {total_count}\n"
+        f"\U0001f5d1\ufe0f _Вы можете удалить любую запись кнопкой ниже._"
     )
-    
+
     return history_text
 
 
@@ -57,46 +56,47 @@ async def build_history_keyboard(
     consultations: List,
     page: int,
     total_pages: int,
-    user_id: int
+    user_id: int,
+    total_count: int = 0
 ) -> InlineKeyboardMarkup:
     """Построить инлайн-клавиатуру для истории."""
     builder = InlineKeyboardBuilder()
-    
+
     # Кнопки удаления для каждой консультации на странице
     for consult in consultations:
         builder.row(
             InlineKeyboardButton(
-                text=f"❌ Удалить #{consult.id}",
+                text=f"\u274c Удалить #{consult.id}",
                 callback_data=f"delete_consult:{consult.id}:{page}"
             )
         )
-    
+
     # Навигация
     nav_buttons = []
     if page > 1:
         nav_buttons.append(
-            InlineKeyboardButton(text="⬅️ Назад", callback_data=f"history_page:{page-1}")
+            InlineKeyboardButton(text="\u2b05\ufe0f Назад", callback_data=f"history_page:{page-1}")
         )
     if page < total_pages:
         nav_buttons.append(
-            InlineKeyboardButton(text="Вперёд ➡️", callback_data=f"history_page:{page+1}")
+            InlineKeyboardButton(text="Вперёд \u27a1\ufe0f", callback_data=f"history_page:{page+1}")
         )
-    
+
     if nav_buttons:
         builder.row(*nav_buttons)
-    
+
     # Дополнительные действия
     action_buttons = []
     if total_count > 0:
         action_buttons.append(
-            InlineKeyboardButton(text="📥 Экспорт", callback_data=f"export_history:{user_id}")
+            InlineKeyboardButton(text="\U0001f4e5 Экспорт", callback_data=f"export_history:{user_id}")
         )
     action_buttons.append(
-        InlineKeyboardButton(text="🔄 Обновить", callback_data=f"history_page:{page}")
+        InlineKeyboardButton(text="\U0001f504 Обновить", callback_data=f"history_page:{page}")
     )
-    
+
     builder.row(*action_buttons)
-    
+
     return builder.as_markup()
 
 
@@ -115,25 +115,25 @@ async def show_history_page(
     if not session_maker:
         if isinstance(message_or_callback, Message):
             await message_or_callback.answer(
-                "📂 *История консультаций временно недоступна*\n"
+                "\U0001f4c2 *История консультаций временно недоступна*\n"
                 "База данных не подключена. Попробуйте позже.",
                 parse_mode="Markdown"
             )
         else:
             await message_or_callback.answer("Операция недоступна", show_alert=True)
         return
-    
+
     user_id = message_or_callback.from_user.id
-    
+
     try:
         async with session_maker() as session:
             # Получаем общее количество
             total_count = await ConsultationHistory.count_by_user(session, user_id)
-            
+
             if total_count == 0:
                 if isinstance(message_or_callback, Message):
                     await message_or_callback.answer(
-                        "📭 *История пуста*\n"
+                        "\U0001f4ed *История пуста*\n"
                         "У вас ещё нет сохранённых консультаций с AI.\n"
                         "Используйте команду `/ask` для первой консультации.",
                         parse_mode="Markdown"
@@ -141,25 +141,25 @@ async def show_history_page(
                 else:
                     await message_or_callback.answer("История пуста", show_alert=True)
                 return
-            
+
             # Рассчитываем страницы
             total_pages = (total_count + CONSULTATIONS_PER_PAGE - 1) // CONSULTATIONS_PER_PAGE
             page = max(1, min(page, total_pages))
             offset = (page - 1) * CONSULTATIONS_PER_PAGE
-            
+
             # Получаем консультации для страницы
             consultations = await ConsultationHistory.get_by_user(
                 session, user_id, limit=CONSULTATIONS_PER_PAGE, offset=offset
             )
-            
+
             # Строим сообщение и клавиатуру
             history_text = await build_history_message(
                 consultations, total_count, page, total_pages
             )
             keyboard = await build_history_keyboard(
-                consultations, page, total_pages, user_id
+                consultations, page, total_pages, user_id, total_count
             )
-            
+
             if isinstance(message_or_callback, Message):
                 await message_or_callback.answer(
                     history_text,
@@ -173,12 +173,12 @@ async def show_history_page(
                     reply_markup=keyboard
                 )
                 await message_or_callback.answer()
-                
+
     except Exception as e:
         log.error(f"Ошибка при получении истории: {e}")
         if isinstance(message_or_callback, Message):
             await message_or_callback.answer(
-                "⚠️ *Ошибка при загрузке истории*\n"
+                "\u26a0\ufe0f *Ошибка при загрузке истории*\n"
                 "Попробуйте позже или обратитесь к администратору.",
                 parse_mode="Markdown"
             )
@@ -203,23 +203,23 @@ async def delete_consultation(callback: types.CallbackQuery, session_maker=None)
     if not session_maker:
         await callback.answer("Операция недоступна", show_alert=True)
         return
-    
+
     try:
         data_parts = callback.data.split(":")
         consult_id = int(data_parts[1])
         page = int(data_parts[2]) if len(data_parts) > 2 else 1
         user_id = callback.from_user.id
-        
+
         async with session_maker() as session:
             deleted = await ConsultationHistory.delete(session, consult_id, user_id)
-            
-            if deleted:
-                # Показываем обновлённую страницу
-                await show_history_page(callback, session_maker, page)
-                await callback.answer(f"Консультация #{consult_id} удалена")
-            else:
-                await callback.answer("Консультация не найдена или недоступна", show_alert=True)
-                
+
+        if deleted:
+            # Показываем обновлённую страницу
+            await show_history_page(callback, session_maker, page)
+            await callback.answer(f"Консультация #{consult_id} удалена")
+        else:
+            await callback.answer("Консультация не найдена или недоступна", show_alert=True)
+
     except Exception as e:
         log.error(f"Ошибка при удалении консультации: {e}")
         await callback.answer("Ошибка при удалении", show_alert=True)
@@ -231,45 +231,45 @@ async def export_history(callback: types.CallbackQuery, session_maker=None):
     if not session_maker:
         await callback.answer("Операция недоступна", show_alert=True)
         return
-    
+
     user_id = callback.from_user.id
-    
+
     try:
         async with session_maker() as session:
             # Получаем все консультации
             consultations = await ConsultationHistory.get_by_user(session, user_id, limit=1000)
-            
-            if not consultations:
-                await callback.answer("Нет консультаций для экспорта", show_alert=True)
-                return
-            
-            # Создаём временный файл
-            with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', suffix='.txt', delete=False) as f:
-                f.write(f"Экспорт консультаций MysticBot (пользователь {user_id})\n")
-                f.write("=" * 50 + "\n\n")
-                
-                for consult in consultations:
-                    date_str = consult.created_at.strftime("%d.%m.%Y %H:%M")
-                    f.write(f"Консультация #{consult.id} от {date_str}\n")
-                    f.write(f"Вопрос:\n{consult.question}\n\n")
-                    f.write(f"Ответ:\n{consult.answer}\n")
-                    f.write("-" * 40 + "\n\n")
-                
-                temp_path = f.name
-            
-            # Отправляем файл
-            document = FSInputFile(temp_path, filename=f"consultations_{user_id}.txt")
-            await callback.message.answer_document(
-                document,
-                caption=f"📥 *Экспорт консультаций*\nВсего: {len(consultations)} записей",
-                parse_mode="Markdown"
-            )
-            
-            # Удаляем временный файл
-            os.unlink(temp_path)
-            
-            await callback.answer("Экспорт завершён")
-            
+
+        if not consultations:
+            await callback.answer("Нет консультаций для экспорта", show_alert=True)
+            return
+
+        # Создаём временный файл
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', suffix='.txt', delete=False) as f:
+            f.write(f"Экспорт консультаций MysticBot (пользователь {user_id})\n")
+            f.write("=" * 50 + "\n\n")
+
+            for consult in consultations:
+                date_str = consult.created_at.strftime("%d.%m.%Y %H:%M")
+                f.write(f"Консультация #{consult.id} от {date_str}\n")
+                f.write(f"Вопрос:\n{consult.question}\n\n")
+                f.write(f"Ответ:\n{consult.answer}\n")
+                f.write("-" * 40 + "\n\n")
+
+            temp_path = f.name
+
+        # Отправляем файл
+        document = FSInputFile(temp_path, filename=f"consultations_{user_id}.txt")
+        await callback.message.answer_document(
+            document,
+            caption=f"\U0001f4e5 *Экспорт консультаций*\nВсего: {len(consultations)} записей",
+            parse_mode="Markdown"
+        )
+
+        # Удаляем временный файл
+        os.unlink(temp_path)
+
+        await callback.answer("Экспорт завершён")
+
     except Exception as e:
         log.error(f"Ошибка при экспорте истории: {e}")
         await callback.answer("Ошибка при экспорте", show_alert=True)
