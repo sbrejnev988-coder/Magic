@@ -8,7 +8,7 @@ import asyncio
 import logging
 from sqlalchemy import text
 from bot.database.engine import create_engine
-from bot.config import Settings
+from bot.config import settings
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -16,8 +16,8 @@ log = logging.getLogger(__name__)
 
 async def add_indexes():
     """Добавляет индексы к существующим таблицам"""
-    settings = Settings()
-    engine = create_engine(settings.DATABASE_URL)
+
+    engine = create_engine(settings.database.url)
     
     indexes = [
         # user_settings
