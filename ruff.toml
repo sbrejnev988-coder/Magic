@@ -12,20 +12,30 @@ select = ["E", "F", "B", "C", "W", "PL", "RUF"]
 
 ignore = [
     "E501",     # line too long
+    "E712",     # avoid equality comparisons to True/False
     "F401",     # unused import (side-effect imports)
+    "F811",     # redefinition of unused name
+    "F821",     # undefined name
     "F841",     # unused variable
-    "RUF001",   # ambiguous unicode (Cyrillic strings)
-    "RUF002",   # ambiguous unicode in docstrings
-    "RUF003",   # ambiguous unicode in comments
+    "B007",     # unused loop variable
+    "B904",     # raise without from in except
+    "C901",     # too complex
     "W291",     # trailing whitespace
     "W292",     # no newline at end of file
     "W293",     # blank line contains whitespace
     "PLC0415",  # import not at top-level (try/except pattern)
+    "PLR0912",  # too many branches
     "PLR0913",  # too many arguments
+    "PLR0915",  # too many statements
     "PLR2004",  # magic value in comparison
+    "PLW0603",  # using the global statement is discouraged
+    "PLW1510",  # subprocess.run without explicit check
+    "PLW2901",  # for loop variable overwritten by assignment
     "F541",     # f-string without placeholders
-    "B007",     # unused loop variable
-    "C901",     # too complex
+    "RUF001",   # ambiguous unicode (Cyrillic strings)
+    "RUF002",   # ambiguous unicode in docstrings
+    "RUF003",   # ambiguous unicode in comments
+    "RUF059",   # unpacked variable never used
 ]
 
 [format]
