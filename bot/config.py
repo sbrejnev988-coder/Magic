@@ -3,34 +3,56 @@ MysticBot — Конфигурация
 Загрузка переменных окружения с валидацией и дефолтами.
 """
 
+from __future__ import annotations
+
 import os
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
-from dotenv import load_dotenv
+from typing import Optional
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    raise ImportError(
+        "python-dotenv не установлен. Выполните: pip install python-dotenv"
+    )
 
 # Загружаем .env из корня проекта
 env_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
+else:
+    logging.warning(f"Файл .env не найден по пути: {env_path}")
 
 logger = logging.getLogger(__name__)
 
 
-def _parse_int(value: str, default: int) -> int:
+def _parse_int(value: Optional[str], default: int) -> int:
     """Парсит строку в целое число, возвращает default при ошибке."""
+    if value is None:
+        return default
     try:
         return int(value.strip())
     except (ValueError, AttributeError):
         return default
 
 
-def _parse_float(value: str, default: float) -> float:
+def _parse_float(value: Optional[str], default: float) -> float:
     """Парсит строку в число с плавающей точкой, возвращает default при ошибке."""
+    if value is None:
+        return default
     try:
         return float(value.strip())
     except (ValueError, AttributeError):
         return default
+
+
+def _parse_bool(value: Optional[str], default: bool = False) -> bool:
+    """Парсинг строкового bool из .env."""
+    if not value:
+        return default
+    return value.strip().lower() in ("true", "1", "yes", "on")
 
 
 @dataclass(frozen=True)
@@ -52,7 +74,7 @@ class FeatherlessConfig:
     api_key: str = ""
     base_url: str = "https://api.featherless.ai/v1"
     model: str = "zai-org/GLM-4.7-Flash"
-    timeout: int = 120          # секунды (холодный старт модели)
+    timeout: int = 180          # секунды (холодный старт модели)
     max_retries: int = 3        # retry при 503
     retry_delay: float = 30.0   # пауза между retry (сек)
     enabled: bool = False
@@ -111,9 +133,9 @@ class Settings:
     log_level: str = "INFO"
 
     @property
-    def llm_providers_order(self) -> List[str]:
+    def llm_providers_order(self) -> list[str]:
         """Список активных провайдеров в порядке приоритета."""
-        providers: List[str] = []
+        providers: list[str] = []
         if self.featherless.enabled:
             providers.append("featherless")
         if self.perplexity.enabled:
@@ -123,21 +145,14 @@ class Settings:
         return providers
 
 
-def _parse_bool(value: str, default: bool = False) -> bool:
-    """Парсинг строкового bool из .env."""
-    if not value:
-        return default
-    return value.strip().lower() in ("true", "1", "yes", "on")
-
-
 def load_settings() -> Settings:
     """
     Загрузка настроек из переменных окружения.
 
-    Возвращает Settings. Не кидает исключений — 
+    Возвращает Settings. Не кидает исключений —
     при отсутствии ключей провайдер помечается enabled=False.
     """
-    warnings: List[str] = []
+    warnings: list[str] = []
 
     # --- Telegram ---
     bot_token = os.getenv("BOT_TOKEN", "").strip()
@@ -150,9 +165,7 @@ def load_settings() -> Settings:
         warnings.append(f"ADMIN_USER_ID='{admin_id_raw}' — не число, установлено 0")
 
     if not bot_token:
-        warnings.append("⚠️ BOT_TOKEN не указан — бот не сможет запуститься")
-    elif len(bot_token) < 40:
-        warnings.append("⚠️ BOT_TOKEN слишком короткий, проверьте корректность")
+        warnings.append("BOT_TOKEN не указан — бот не сможет запуститься")
 
     telegram = TelegramConfig(bot_token=bot_token, admin_user_id=admin_user_id)
 
@@ -168,28 +181,22 @@ def load_settings() -> Settings:
         os.getenv("FEATHERLESS_ENDPOINT", "https://api.featherless.ai/v1")
     ).strip().rstrip("/")
     fl_model = os.getenv("FEATHERLESS_MODEL", "zai-org/GLM-4.7-Flash").strip()
-    fl_timeout = _parse_int(os.getenv("FEATHERLESS_TIMEOUT", "120"), 120)
+    fl_timeout = _parse_int(os.getenv("FEATHERLESS_TIMEOUT", "180"), 180)
     fl_retries = _parse_int(os.getenv("FEATHERLESS_MAX_RETRIES", "3"), 3)
+    fl_retry_delay = _parse_float(os.getenv("FEATHERLESS_RETRY_DELAY", "30.0"), 30.0)
 
-    # Улучшенная валидация base_url
-    if fl_key:
-        if not fl_base.startswith(("http://", "https://")):
-            warnings.append(
-                f"⚠️ FEATHERLESS_BASE_URL='{fl_base}' не начинается с http:// или https://"
-            )
-        if not (fl_base.endswith("/v1") or fl_base.endswith("/v1/")):
-            warnings.append(
-                f"⚠️ FEATHERLESS_BASE_URL='{fl_base}' не заканчивается на /v1. "
-                f"Правильный формат: https://api.featherless.ai/v1"
-            )
-        # Валидация модели
-        if "/" not in fl_model:
-            warnings.append(
-                f"⚠️ FEATHERLESS_MODEL='{fl_model}' — нет '/' (HuggingFace формат). "
-                f"Пример: zai-org/GLM-4.7-Flash"
-            )
-        if len(fl_key) < 20:
-            warnings.append("⚠️ FEATHERLESS_API_KEY слишком короткий")
+    # Валидация base_url
+    if fl_key and not fl_base.endswith("/v1"):
+        warnings.append(
+            f"FEATHERLESS_BASE_URL='{fl_base}' не заканчивается на /v1. "
+            f"Правильный формат: https://api.featherless.ai/v1"
+        )
+    # Валидация модели
+    if fl_key and "/" not in fl_model:
+        warnings.append(
+            f"FEATHERLESS_MODEL='{fl_model}' — нет '/' (HuggingFace формат). "
+            f"Пример: zai-org/GLM-4.7-Flash"
+        )
 
     featherless = FeatherlessConfig(
         api_key=fl_key,
@@ -197,15 +204,13 @@ def load_settings() -> Settings:
         model=fl_model,
         timeout=fl_timeout,
         max_retries=fl_retries,
+        retry_delay=fl_retry_delay,
         enabled=bool(fl_key),
     )
 
     # --- Perplexity ---
     px_key = os.getenv("PERPLEXITY_API_KEY", "").strip()
     px_model = os.getenv("PERPLEXITY_MODEL", "sonar-pro").strip()
-
-    if px_key and len(px_key) < 20:
-        warnings.append("⚠️ PERPLEXITY_API_KEY слишком короткий")
 
     perplexity = PerplexityConfig(
         api_key=px_key,
@@ -216,9 +221,6 @@ def load_settings() -> Settings:
     # --- OpenAI ---
     oai_key = os.getenv("OPENAI_API_KEY", "").strip()
     oai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
-
-    if oai_key and len(oai_key) < 20:
-        warnings.append("⚠️ OPENAI_API_KEY слишком короткий")
 
     openai_cfg = OpenAIConfig(
         api_key=oai_key,
@@ -244,11 +246,18 @@ def load_settings() -> Settings:
     )
 
     log_level = os.getenv("LOG_LEVEL", "INFO").strip().upper()
+    valid_log_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+    if log_level not in valid_log_levels:
+        warnings.append(
+            f"LOG_LEVEL='{log_level}' невалиден. "
+            f"Допустимые: {', '.join(sorted(valid_log_levels))}. Установлен INFO."
+        )
+        log_level = "INFO"
 
     # Rate limiting and Redis
     rate_limit = _parse_float(os.getenv("RATE_LIMIT", "2.0"), 2.0)
     rate_window = _parse_int(os.getenv("RATE_WINDOW", "5"), 5)
-    redis_url = os.getenv("REDIS_URL", "")
+    redis_url = os.getenv("REDIS_URL", "").strip()
 
     settings = Settings(
         telegram=telegram,
@@ -265,14 +274,14 @@ def load_settings() -> Settings:
 
     # Вывод предупреждений
     for w in warnings:
-        logger.warning(f"⚠️ Config: {w}")
+        logger.warning(f"\u26a0\ufe0f Config: {w}")
 
     # Итоговый лог
     providers = settings.llm_providers_order
     if providers:
-        logger.info(f"✅ LLM провайдеры (приоритет): {' → '.join(providers)}")
+        logger.info(f"\u2705 LLM провайдеры (приоритет): {' \u2192 '.join(providers)}")
     else:
-        logger.warning("⚠️ Ни один LLM-провайдер не настроен!")
+        logger.warning("\u26a0\ufe0f Ни один LLM-провайдер не настроен!")
 
     return settings
 
