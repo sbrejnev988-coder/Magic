@@ -14,12 +14,12 @@ from typing import List, Optional
 from telethon import TelegramClient, events
 from telethon.tl.types import Message, MessageMediaPhoto, MessageMediaDocument
 
-from bot.config import Settings
+from bot.config import settings
 from bot.services.order import OrderService
 from bot.database.engine import create_engine, get_session_maker
 
 # Настройки
-settings = Settings()
+
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
     format='%(asctime)s | %(name)s | %(levelname)s | %(message)s'
@@ -69,7 +69,7 @@ class MysticUserbot:
     async def init_database(self):
         """Инициализация базы данных"""
         try:
-            self.engine = create_engine(settings.DATABASE_URL)
+            self.engine = create_engine(settings.database.url)
             self.session_maker = get_session_maker(self.engine)
             log.info("База данных инициализирована")
         except Exception as e:
@@ -302,9 +302,9 @@ class MysticUserbot:
     async def notify_admin(self, text: str):
         """Отправляет уведомление администратору"""
         try:
-            if settings.ADMIN_USER_ID:
+            if settings.telegram.admin_user_id:
                 await self.client.send_message(
-                    int(settings.ADMIN_USER_ID),
+                    int(settings.telegram.admin_user_id),
                     text
                 )
                 log.debug("Уведомление отправлено администратору")
