@@ -4,7 +4,10 @@
 
 import enum
 from datetime import datetime
-from sqlalchemy import Column, Integer, BigInteger, String, Text, DateTime, Enum, Boolean
+from typing import Optional
+
+from sqlalchemy import BigInteger, Boolean, Enum, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from .base import Base
@@ -12,7 +15,7 @@ from .base import Base
 
 class OrderStatus(enum.Enum):
     """Статусы заказа"""
-    NEW = "new"              # новый заказ
+    NEW = "new"                # новый заказ
     PROCESSING = "processing"  # в обработке
     COMPLETED = "completed"    # выполнен (консультация отправлена)
     CANCELLED = "cancelled"    # отменён
@@ -22,23 +25,23 @@ class Order(Base):
     """Заказ консультации"""
     __tablename__ = "orders"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(BigInteger, nullable=False, index=True)      # ID пользователя Telegram
-    username = Column(String(100), nullable=True)                 # @username
-    first_name = Column(String(100), nullable=True)               # имя
-    question = Column(Text, nullable=False)                       # вопрос пользователя
-    birth_date = Column(String(20), nullable=False)               # дата рождения (ДД.ММ.ГГГГ)
-    status = Column(Enum(OrderStatus), default=OrderStatus.NEW, nullable=False)
-    is_paid = Column(Boolean, default=False, nullable=False)      # оплачен ли заказ
-    payment_screenshot = Column(String(500), nullable=True)       # file_id или путь к скриншоту оплаты
-    admin_notes = Column(Text, nullable=True)                     # заметки администратора
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)  # ID пользователя Telegram
+    username: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # @username
+    first_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # имя
+    question: Mapped[str] = mapped_column(Text, nullable=False)  # вопрос пользователя
+    birth_date: Mapped[str] = mapped_column(String(20), nullable=False)  # дата рождения (ДД.ММ.ГГГГ)
+    status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus), default=OrderStatus.NEW, nullable=False)
+    is_paid: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)  # оплачен ли заказ
+    payment_screenshot: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)  # file_id или путь к скриншоту оплаты
+    admin_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # заметки администратора
+    created_at: Mapped[datetime] = mapped_column(default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now(), nullable=False)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Order(id={self.id}, user_id={self.user_id}, status={self.status})>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, object]:
         """Преобразование в словарь для JSON"""
         return {
             "id": self.id,
