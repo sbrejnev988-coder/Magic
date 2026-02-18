@@ -130,7 +130,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main(), debug=True)
+        asyncio.run(main(), debug=False)
     except KeyboardInterrupt:
         print("\nАдмин-бот остановлен.")
     except Exception as e:
