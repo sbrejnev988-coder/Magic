@@ -107,8 +107,9 @@ class Settings:
     features: FeaturesConfig = field(default_factory=FeaturesConfig)
     rate_limit: float = 2.0
     rate_window: int = 5
-    redis_url: str = ""
+    REDIS_URL: str = ""
     log_level: str = "INFO"
+    ADMIN_BOT_TOKEN: str = ""
 
     @property
     def llm_providers_order(self) -> List[str]:
@@ -142,6 +143,7 @@ def load_settings() -> Settings:
     # --- Telegram ---
     bot_token = os.getenv("BOT_TOKEN", "").strip()
     admin_id_raw = os.getenv("ADMIN_USER_ID", "0").strip()
+    admin_bot_token = os.getenv("ADMIN_BOT_TOKEN", "").strip()
 
     try:
         admin_user_id = int(admin_id_raw)
@@ -153,6 +155,11 @@ def load_settings() -> Settings:
         warnings.append("⚠️ BOT_TOKEN не указан — бот не сможет запуститься")
     elif len(bot_token) < 40:
         warnings.append("⚠️ BOT_TOKEN слишком короткий, проверьте корректность")
+
+    if not admin_bot_token:
+        warnings.append("⚠️ ADMIN_BOT_TOKEN не указан — админ-бот не сможет запуститься")
+    elif len(admin_bot_token) < 40:
+        warnings.append("⚠️ ADMIN_BOT_TOKEN слишком короткий, проверьте корректность")
 
     telegram = TelegramConfig(bot_token=bot_token, admin_user_id=admin_user_id)
 
@@ -248,7 +255,7 @@ def load_settings() -> Settings:
     # Rate limiting and Redis
     rate_limit = _parse_float(os.getenv("RATE_LIMIT", "2.0"), 2.0)
     rate_window = _parse_int(os.getenv("RATE_WINDOW", "5"), 5)
-    redis_url = os.getenv("REDIS_URL", "")
+    REDIS_URL = os.getenv("REDIS_URL", "")
 
     settings = Settings(
         telegram=telegram,
@@ -259,8 +266,9 @@ def load_settings() -> Settings:
         features=features,
         rate_limit=rate_limit,
         rate_window=rate_window,
-        redis_url=redis_url,
+        REDIS_URL=REDIS_URL,
         log_level=log_level,
+        ADMIN_BOT_TOKEN=admin_bot_token,
     )
 
     # Вывод предупреждений
