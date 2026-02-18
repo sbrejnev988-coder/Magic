@@ -4,6 +4,8 @@ MysticBot — точка входа
 import asyncio
 import logging
 from pathlib import Path
+import psutil
+import os
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -114,6 +116,34 @@ async def main():
             fsm_storage = MemoryStorage()
 
     # --- Бот и диспетчер ---
+    # Проверка дублирующих процессов для избежания TelegramConflictError
+    current_pid = os.getpid()
+    token_part = settings.telegram.bot_token[:10] if settings.telegram.bot_token else ""
+    killed = []
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            if proc.pid == current_pid:
+                continue
+            cmdline = proc.cmdline()
+            if (any('python' in part.lower() for part in cmdline) and
+                any('MysticBot' in part or 'bot/main.py' in part for part in cmdline) and
+                token_part and any(token_part in part for part in cmdline)):
+                log.warning(f"⚠️ Найден дублирующий процесс PID {proc.pid}, завершаю...")
+                proc.terminate()
+                try:
+                    proc.wait(timeout=2)
+                    killed.append(proc.pid)
+                    log.info(f"✅ Процесс {proc.pid} завершён")
+                except (psutil.TimeoutExpired, psutil.NoSuchProcess):
+                    proc.kill()
+                    killed.append(proc.pid)
+                    log.info(f"⚠️ Процесс {proc.pid} принудительно завершён")
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    if killed:
+        log.info(f"✅ Завершено дублирующих процессов: {len(killed)}")
+        await asyncio.sleep(1)  # Даём время на освобождение ресурсов
+    
     bot = Bot(token=settings.telegram.bot_token)
     dp = Dispatcher(storage=fsm_storage)
 

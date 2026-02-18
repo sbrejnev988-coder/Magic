@@ -110,6 +110,9 @@ class Settings:
     REDIS_URL: str = ""
     log_level: str = "INFO"
     ADMIN_BOT_TOKEN: str = ""
+    TELETHON_API_ID: int = 0
+    TELETHON_API_HASH: str = ""
+    LOG_LEVEL: str = "INFO"
 
     @property
     def llm_providers_order(self) -> List[str]:
@@ -256,6 +259,11 @@ def load_settings() -> Settings:
     rate_limit = _parse_float(os.getenv("RATE_LIMIT", "2.0"), 2.0)
     rate_window = _parse_int(os.getenv("RATE_WINDOW", "5"), 5)
     REDIS_URL = os.getenv("REDIS_URL", "")
+    
+    # Telethon
+    TELETHON_API_ID = _parse_int(os.getenv("TELETHON_API_ID", "0"), 0)
+    TELETHON_API_HASH = os.getenv("TELETHON_API_HASH", "").strip()
+    LOG_LEVEL = log_level
 
     settings = Settings(
         telegram=telegram,
@@ -269,6 +277,9 @@ def load_settings() -> Settings:
         REDIS_URL=REDIS_URL,
         log_level=log_level,
         ADMIN_BOT_TOKEN=admin_bot_token,
+        TELETHON_API_ID=TELETHON_API_ID,
+        TELETHON_API_HASH=TELETHON_API_HASH,
+        LOG_LEVEL=LOG_LEVEL,
     )
 
     # Вывод предупреждений
